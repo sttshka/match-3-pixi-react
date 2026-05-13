@@ -9,7 +9,7 @@ export class AssetManager {
   async init(): Promise<void> {
     if (this.initialized) return;
     // Регистрируем бандлы. Это позволяет потом грузить по имени.
-    Assets.init({
+    await Assets.init({
       manifest: {
         bundles: manifest.bundles.map((b) => ({
           name: b.name,
