@@ -26,6 +26,7 @@ describe('planBoosterSurvivorsFromMatches', () => {
     ]);
     expect(plan.upgrades).toHaveLength(0);
     expect(plan.remove).toHaveLength(3);
+    expect(plan.merges).toHaveLength(0);
   });
 
   it('вертикаль из 4 — ракета чистит строку (LINE_ROW)', () => {
@@ -42,6 +43,9 @@ describe('planBoosterSurvivorsFromMatches', () => {
       },
     ]);
     expect(plan.upgrades).toEqual([{ col: 0, row: 1, type: TILE_TYPE_LINE_ROW }]);
+    expect(plan.merges).toHaveLength(1);
+    expect(plan.merges[0]!.pivot).toEqual({ col: 0, row: 1 });
+    expect(plan.merges[0]!.absorb).toHaveLength(3);
   });
 
   it('горизонталь из 4 — ракета чистит столбец (LINE_COL)', () => {
@@ -59,6 +63,8 @@ describe('planBoosterSurvivorsFromMatches', () => {
     ]);
     expect(plan.upgrades).toEqual([{ col: 1, row: 0, type: TILE_TYPE_LINE_COL }]);
     expect(plan.remove).toHaveLength(3);
+    expect(plan.merges).toHaveLength(1);
+    expect(plan.merges[0]!.pivot).toEqual({ col: 1, row: 0 });
   });
 
   it('линия из 5 — цветной бустер в центре', () => {
@@ -77,6 +83,8 @@ describe('planBoosterSurvivorsFromMatches', () => {
     ]);
     expect(plan.upgrades).toEqual([{ col: 2, row: 0, type: TILE_TYPE_COLOR }]);
     expect(plan.remove).toHaveLength(4);
+    expect(plan.merges).toHaveLength(1);
+    expect(plan.merges[0]!.absorb).toHaveLength(4);
   });
 
   it('крест — бомба в «центре»', () => {
@@ -95,6 +103,8 @@ describe('planBoosterSurvivorsFromMatches', () => {
     ]);
     expect(plan.upgrades).toEqual([{ col: 2, row: 2, type: TILE_TYPE_BOMB }]);
     expect(plan.remove).toHaveLength(4);
+    expect(plan.merges).toHaveLength(1);
+    expect(plan.merges[0]!.absorb).toHaveLength(4);
   });
 
   it('квадрат 2×2 — бумажный самолётик', () => {
@@ -112,6 +122,8 @@ describe('planBoosterSurvivorsFromMatches', () => {
     ]);
     expect(plan.upgrades).toEqual([{ col: 0, row: 0, type: TILE_TYPE_PLANE }]);
     expect(plan.remove).toHaveLength(3);
+    expect(plan.merges).toHaveLength(1);
+    expect(plan.merges[0]!.absorb).toHaveLength(3);
   });
 
   it('крест из 7 фишек — бомба не создаётся, все клетки снимаются', () => {
@@ -127,6 +139,7 @@ describe('planBoosterSurvivorsFromMatches', () => {
     const plan = planBoosterSurvivorsFromMatches([{ tiles, length: 7, kind: 'cross' }]);
     expect(plan.upgrades).toHaveLength(0);
     expect(plan.remove).toHaveLength(7);
+    expect(plan.merges).toHaveLength(0);
   });
 });
 

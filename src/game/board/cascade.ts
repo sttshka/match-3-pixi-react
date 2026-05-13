@@ -74,6 +74,21 @@ export function nextCascadeStep(
   if (groups.length === 0) return null;
 
   const plan = planBoosterSurvivorsFromMatches(groups, opts?.moveTarget);
+
+  const boosterMerges =
+    plan.merges.length > 0
+      ? plan.merges
+          .map((m) => {
+            const t = board.get(m.pivot.col, m.pivot.row);
+            if (!t) return null;
+            return { survivorId: t.id, pivot: m.pivot, absorb: m.absorb };
+          })
+          .filter(
+            (x): x is { survivorId: number; pivot: TilePosition; absorb: TilePosition[] } =>
+              x !== null,
+          )
+      : undefined;
+
   for (const u of plan.upgrades) {
     const tile = board.get(u.col, u.row);
     if (tile) tile.type = u.type;
@@ -95,6 +110,7 @@ export function nextCascadeStep(
     scoreGained: scoreForGroups(groups),
     removed: plan.remove,
     upgradedToBooster,
+    boosterMerges,
   };
 
   const moves = board.collapse();

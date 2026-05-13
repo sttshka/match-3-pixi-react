@@ -7,9 +7,16 @@ import {
   TILE_TYPE_PLANE,
 } from '@core/constants';
 
+export interface BoosterMergePlan {
+  pivot: TilePosition;
+  absorb: TilePosition[];
+}
+
 export interface MatchResolutionPlan {
   upgrades: Array<{ col: number; row: number; type: number }>;
   remove: TilePosition[];
+  /** Каждый мердж в бустер: pivot остаётся, остальные клетки группы — в absorb. */
+  merges: BoosterMergePlan[];
 }
 
 function key(p: TilePosition): string {
@@ -107,6 +114,7 @@ export function planBoosterSurvivorsFromMatches(
   const survivorKeys = new Set<string>();
   const removeKeys = new Set<string>();
   const upgrades: Array<{ col: number; row: number; type: number }> = [];
+  const merges: BoosterMergePlan[] = [];
 
   for (const g of sorted) {
     const tilesAvail = g.tiles.filter((t) => !survivorKeys.has(key(t)));
@@ -118,6 +126,10 @@ export function planBoosterSurvivorsFromMatches(
         moveTarget && tilesAvail.some((t) => key(t) === key(moveTarget)) ? moveTarget : sortedSq[0]!;
       upgrades.push({ col: pivot.col, row: pivot.row, type: TILE_TYPE_PLANE });
       survivorKeys.add(key(pivot));
+      merges.push({
+        pivot,
+        absorb: tilesAvail.filter((t) => key(t) !== key(pivot)),
+      });
       for (const t of tilesAvail) {
         if (key(t) !== key(pivot)) removeKeys.add(key(t));
       }
@@ -148,6 +160,10 @@ export function planBoosterSurvivorsFromMatches(
           }
           upgrades.push({ col: alt.col, row: alt.row, type: TILE_TYPE_BOMB });
           survivorKeys.add(key(alt));
+          merges.push({
+            pivot: alt,
+            absorb: tilesAvail.filter((t) => key(t) !== key(alt)),
+          });
           for (const t of tilesAvail) {
             if (key(t) !== key(alt)) removeKeys.add(key(t));
           }
@@ -155,6 +171,10 @@ export function planBoosterSurvivorsFromMatches(
         }
         upgrades.push({ col: pivot.col, row: pivot.row, type: TILE_TYPE_BOMB });
         survivorKeys.add(key(pivot));
+        merges.push({
+          pivot,
+          absorb: tilesAvail.filter((t) => key(t) !== key(pivot)),
+        });
         for (const t of tilesAvail) {
           if (key(t) !== key(pivot)) removeKeys.add(key(t));
         }
@@ -172,6 +192,10 @@ export function planBoosterSurvivorsFromMatches(
       }
       upgrades.push({ col: pivot.col, row: pivot.row, type: TILE_TYPE_COLOR });
       survivorKeys.add(key(pivot));
+      merges.push({
+        pivot,
+        absorb: tilesAvail.filter((t) => key(t) !== key(pivot)),
+      });
       for (const t of tilesAvail) {
         if (key(t) !== key(pivot)) removeKeys.add(key(t));
       }
@@ -189,6 +213,10 @@ export function planBoosterSurvivorsFromMatches(
       }
       upgrades.push({ col: pivot.col, row: pivot.row, type: lineType });
       survivorKeys.add(key(pivot));
+      merges.push({
+        pivot,
+        absorb: tilesAvail.filter((t) => key(t) !== key(pivot)),
+      });
       for (const t of tilesAvail) {
         if (key(t) !== key(pivot)) removeKeys.add(key(t));
       }
@@ -208,5 +236,5 @@ export function planBoosterSurvivorsFromMatches(
     remove.push({ col: Number(cs), row: Number(rs) });
   }
 
-  return { upgrades, remove };
+  return { upgrades, remove, merges };
 }

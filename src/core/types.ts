@@ -38,6 +38,15 @@ export interface ResolveResult {
   removed: TilePosition[];
   /** Тайлы, превращённые в бустеры на этом шаге (по id — позиция могла измениться после гравитации). */
   upgradedToBooster?: Array<{ id: number; type: number }>;
+  /**
+   * Мердж в бустер: клетки `absorb` (до гравитации) визуально втягиваются в `pivot`;
+   * `survivorId` — тайл на pivot до смены графики.
+   */
+  boosterMerges?: Array<{
+    survivorId: number;
+    pivot: TilePosition;
+    absorb: TilePosition[];
+  }>;
 }
 
 export interface CascadeStep {

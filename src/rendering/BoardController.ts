@@ -14,7 +14,7 @@ import { CommandQueue } from '@game/commands/CommandQueue';
 import { ANIM, BOARD_COLS, BOARD_ROWS, TILE_COLORS, TILE_SIZE } from '@core/constants';
 import { bus } from '@core/eventBus';
 import { isAdjacent } from '@utils/math';
-import { tweenAll, tweenTo } from '@utils/tween';
+import { tweenAll, tweenTo, type TweenProps } from '@utils/tween';
 import type { CascadeStep, TileModel, TilePosition } from '@core/types';
 import { useAppStore } from '@game/state/store';
 import { type IHitArea } from 'pixi.js';
@@ -493,11 +493,82 @@ export class BoardController {
     bus.emit('matches:found', step.resolved);
     bus.emit('cascade:step', step);
 
-    await this.animatePops(step.resolved.removed);
+    const absorbKeys = this.absorbKeysFromBoosterMerges(step.resolved.boosterMerges);
+    const removedForPop = step.resolved.removed.filter(
+      (p) => !absorbKeys.has(`${p.col}:${p.row}`),
+    );
+
+    await this.animateBoosterMerges(step.resolved.boosterMerges);
+    await this.animatePops(removedForPop);
     this.refreshTilesAtBoosterUpgrades(step.resolved.upgradedToBooster, step.moves);
 
     await this.animateMoves(step.moves);
     await this.animateSpawned(step.spawned);
+  }
+
+  private absorbKeysFromBoosterMerges(
+    merges?: Array<{ survivorId: number; pivot: TilePosition; absorb: TilePosition[] }>,
+  ): Set<string> {
+    const s = new Set<string>();
+    if (!merges) return s;
+    for (const m of merges) {
+      for (const a of m.absorb) s.add(`${a.col}:${a.row}`);
+    }
+    return s;
+  }
+
+  private async animateBoosterMerges(
+    merges?: Array<{ survivorId: number; pivot: TilePosition; absorb: TilePosition[] }>,
+  ): Promise<void> {
+    if (!merges?.length) return;
+    const tweens: Array<{ target: Graphics; props: TweenProps }> = [];
+    const absorbedIds = new Set<number>();
+
+    for (const m of merges) {
+      const tp = this.cellToPixel(m.pivot.col, m.pivot.row);
+      for (const a of m.absorb) {
+        const sp = this.findSpriteAt(a.col, a.row);
+        if (sp && !absorbedIds.has(sp.id)) {
+          absorbedIds.add(sp.id);
+          tweens.push({
+            target: sp.view,
+            props: {
+              x: tp.x,
+              y: tp.y,
+              scale: 0.08,
+              alpha: 0,
+              duration: ANIM.mergeAbsorb,
+              ease: 'power3.in',
+            },
+          });
+        }
+      }
+      const surv = this.sprites.get(m.survivorId)?.view;
+      if (surv) {
+        tweens.push({
+          target: surv,
+          props: {
+            scale: 1.1,
+            duration: ANIM.mergeAbsorb,
+            ease: 'power2.in',
+          },
+        });
+      }
+    }
+
+    await tweenAll(tweens);
+
+    for (const id of absorbedIds) {
+      const entry = this.sprites.get(id);
+      if (!entry) continue;
+      entry.view.parent?.removeChild(entry.view);
+      entry.view.destroy();
+      this.sprites.delete(id);
+    }
+
+    for (const m of merges) {
+      this.sprites.get(m.survivorId)?.view.scale.set(1);
+    }
   }
 
   private refreshTilesAtBoosterUpgrades(
