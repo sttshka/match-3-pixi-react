@@ -12,12 +12,16 @@ HUD, экраны меню/победы/поражения и подробная
 
 ```bash
 npm install
-npm run dev      # запустить dev-сервер (http://localhost:5173)
-npm run build    # продакшен сборка
-npm run preview  # локальный preview сборки
-npm run lint     # ESLint
-npm run typecheck
-npm run format   # Prettier
+npx playwright install chromium  # один раз, для E2E-тестов
+npm run dev          # запустить dev-сервер (http://localhost:5173)
+npm run build        # продакшен сборка
+npm run preview      # локальный preview сборки
+npm run lint         # ESLint
+npm run typecheck    # tsc -b
+npm run format       # Prettier
+npm run test         # E2E-тесты (Playwright, поднимает Vite сам)
+npm run test:ui      # Playwright UI mode (интерактивно)
+npm run test:report  # открыть HTML-репорт последнего прогона
 ```
 
 Требуется Node.js `>=18.18`.
@@ -62,21 +66,27 @@ npm run format   # Prettier
 ## Структура
 
 ```
-docs/        — документация на русском
-public/      — статика (robots.txt, llms.txt, favicon)
+docs/                  — документация на русском
+public/                — статика (robots.txt, llms.txt, favicon)
 src/
-  assets/    — AssetManager поверх Pixi Assets API
-  audio/     — SoundManager поверх @pixi/sound
-  core/      — extend(), типы, EventBus, константы
-  game/      — Board, matchFinder, cascade, gameMachine, store
-  hooks/     — React-хуки (useResize, useGameTick)
-  physics/   — обёртка над Matter.Engine
-  rendering/ — BoardController (императивный Pixi-слой)
-  scenes/    — BootScene, MenuScene, GameScene
-  ui/        — HUD, LoadingScreen, GameOverModal
-  utils/     — math, random, tween
-  App.tsx    — корневой компонент
-  main.tsx   — точка входа
+  assets/              — AssetManager поверх Pixi Assets API
+  audio/               — SoundManager поверх @pixi/sound
+  core/                — extend(), типы, EventBus, константы
+  game/                — Board, matchFinder, cascade, gameMachine, store
+  hooks/               — React-хуки (useResize, useGameTick)
+  physics/             — обёртка над Matter.Engine
+  rendering/           — BoardController (императивный Pixi-слой)
+  scenes/              — BootScene, MenuScene, GameScene
+  ui/                  — HUD, LoadingScreen, GameOverModal
+  utils/               — math, random, tween
+  App.tsx              — корневой компонент
+  main.tsx             — точка входа
+tests/
+  e2e/                 — E2E-тесты Playwright
+    helpers/           — общие хелперы (gotoApp, startGame, hud)
+.cursor/
+  rules/               — Cursor Rules для агента (см. playwright-tests.mdc)
+playwright.config.ts   — конфиг Playwright (сам поднимает Vite)
 ```
 
 ## Лицензия

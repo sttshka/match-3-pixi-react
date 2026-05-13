@@ -1,0 +1,50 @@
+# Match-3 Pixi v8 Demo
+
+> Учебно-демонстрационный проект match-3 игры на стеке **Pixi.js v8 + React 18 +
+> @pixijs/react v8 + Matter.js**. Включает игровую логику, рендеринг,
+> анимации, базовую физику и подробную русскоязычную документацию.
+
+Назначение проекта — продемонстрировать расширяемую архитектуру для
+интерактивных 2D-игр в браузере и служить отправной точкой для разработки
+полноценной match-3 механики.
+
+## Технологический стек
+
+- Pixi.js v8 — низкоуровневый WebGL/WebGPU-рендер
+- React 18 + @pixijs/react v8 — декларативная сцена и UI
+- Matter.js — 2D физический движок для эффектов и физических режимов
+- TypeScript 5 (strict), Vite 5 — сборка и dev-server
+- Zustand — глобальный стейт UI, mitt — event-bus
+- GSAP — tween-анимации, @pixi/sound — аудио
+
+## Документация
+
+- [Обзор проекта](/docs/01-overview.md): что внутри и зачем
+- [Стек](/docs/02-tech-stack.md): версии и роли библиотек
+- [Архитектура](/docs/03-architecture.md): слои, потоки данных, диаграммы
+- [Взаимодействие библиотек](/docs/04-libraries-interaction.md): Pixi ↔ React ↔ Matter
+- [Best practices Pixi v8](/docs/05-pixi-best-practices.md)
+- [Интеграция React + Pixi](/docs/06-react-pixi-integration.md)
+- [Физика Matter.js](/docs/07-physics-matter.md)
+- [Механики match-3](/docs/08-match3-mechanics.md): свопы, поиск, каскады
+- [Анимации](/docs/09-animations.md): GSAP, CommandQueue, тайминги
+- [Ассеты и текстуры](/docs/10-assets-and-textures.md)
+- [Аудио](/docs/11-audio.md)
+- [Производительность](/docs/12-performance.md)
+- [Тестирование](/docs/13-testing.md)
+- [Соглашения](/docs/14-conventions.md)
+- [Troubleshooting](/docs/15-troubleshooting.md)
+- [Roadmap](/docs/16-roadmap.md)
+
+## Дополнительно
+
+- [README.md](/README.md): быстрый старт
+- [TODO.md](/TODO.md): дорожная карта работ
+- Лицензия: MIT
+- Поддерживаемые языки документации: русский
+
+## Что НЕ относится к проекту
+
+- Бэкенд, серверная синхронизация, авторизация
+- Платёжные системы и магазин внутриигровых покупок
+- Готовые арт-ассеты (используются placeholder-текстуры, сгенерированные кодом)

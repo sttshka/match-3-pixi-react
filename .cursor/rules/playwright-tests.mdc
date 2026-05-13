@@ -1,0 +1,69 @@
+---
+description: Соглашения по написанию E2E-тестов Playwright в этом проекте
+globs: tests/**/*.ts,playwright.config.ts
+alwaysApply: false
+---
+
+# E2E-тесты на Playwright
+
+Все автоматические проверки UI/игры пишем на **@playwright/test**.
+Каталог тестов — `tests/e2e/`. Конфиг — `playwright.config.ts` в корне.
+
+## Где что лежит
+
+- `tests/e2e/*.spec.ts` — тесты, по одному файлу на сценарий/фичу
+- `tests/e2e/helpers/` — переиспользуемые хелперы (хождение по UI, селекторы HUD и т.д.)
+- `tests/e2e/fixtures/` — статичные данные/моки (если потребуются)
+- `playwright.config.ts` — единственный конфиг, сам поднимает Vite через `webServer`
+
+## Базовые правила
+
+1. **Один сценарий — один `test()`**. Группируем по `test.describe()`.
+2. **Никаких хардкод-URL.** Используем `baseURL` из конфига и относительные пути `await page.goto('/')`.
+3. **Селекторы — по ролям и тексту**, не по классам:
+   - `page.getByRole('button', { name: 'Начать игру' })`
+   - `page.getByText('Очки')`
+   - Используем хелперы из `tests/e2e/helpers/game.ts`: `gotoApp`, `startGame`, `hud`, `gameCanvas`.
+4. **Pixi-канвас тестируется через границы** (`boundingBox`) и клики по координатам, потому что внутренних DOM-узлов у тайлов нет.
+5. **Игра недетерминирована** (случайный seed). Не проверяйте конкретные значения счёта/тайлов — проверяйте инварианты: HUD остался числом, канвас видим, нет console errors.
+6. **Для детерминированных проверок** добавляйте seed через query-param/localStorage и явно пробрасывайте в `Board` (см. `docs/13-testing.md`).
+
+## Шаблон нового теста
+
+```ts
+import { test, expect } from '@playwright/test';
+import { gotoApp, startGame, hud } from './helpers/game';
+
+test.describe('<фича>', () => {
+  test('<сценарий>', async ({ page }) => {
+    await gotoApp(page);
+    await startGame(page);
+
+    const { score } = hud(page);
+    await expect(score).toHaveText('0');
+  });
+});
+```
+
+## Чего НЕ делать
+
+- ❌ Не пишите unit-тесты доменной логики в Playwright. Для `Board`,
+  `matchFinder`, `cascade`, `gameMachine` используйте Vitest (когда подключим).
+- ❌ Не используйте `page.waitForTimeout` как способ ждать UI — это
+  допустимо только для пауз "дать игре поработать" в стресс-тестах.
+  В остальных случаях — `expect(...).toBeVisible()` / `toHaveText()`
+  с встроенным retry.
+- ❌ Не кладите тесты в `src/`. Только в `tests/e2e/`.
+- ❌ Не коммитьте `playwright-report/`, `test-results/`, `.playwright-mcp/`
+  — они в `.gitignore`.
+
+## Команды
+
+```bash
+npm run test            # headless прогон
+npm run test:headed     # с видимым окном
+npm run test:ui         # интерактивный Playwright UI mode
+npm run test:report     # открыть HTML-репорт после прогона
+```
+
+Перед первым запуском на машине: `npx playwright install chromium`.

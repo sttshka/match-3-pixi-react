@@ -1,0 +1,47 @@
+{
+  "name": "match3-pixi-react",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Match-3 шаблон на Pixi v8 + React + @pixijs/react + Matter.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --port 4173",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\" \"docs/**/*.md\" \"tests/**/*.ts\"",
+    "typecheck": "tsc -b --pretty",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
+  },
+  "dependencies": {
+    "@pixi/react": "^8.0.2",
+    "@pixi/sound": "^6.0.1",
+    "gsap": "^3.12.5",
+    "matter-js": "^0.20.0",
+    "mitt": "^3.0.1",
+    "pixi.js": "^8.6.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/matter-js": "^0.19.8",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^8.57.1",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
