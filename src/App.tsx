@@ -6,6 +6,7 @@ import { MenuScene } from '@scenes/MenuScene';
 import { GameScene } from '@scenes/GameScene';
 import { LoadingScreen } from '@ui/LoadingScreen';
 import { HUD } from '@ui/HUD';
+import { BoosterHintPanel } from '@ui/BoosterHintPanel';
 import { GameOverModal } from '@ui/GameOverModal';
 
 export function App() {
@@ -32,7 +33,12 @@ export function App() {
       {!loaded && <LoadingScreen />}
 
       {scene === 'menu' && <MenuScene />}
-      {scene === 'game' && <HUD />}
+      {scene === 'game' && (
+        <>
+          <HUD />
+          <BoosterHintPanel />
+        </>
+      )}
       {scene === 'gameOver' && <GameOverModal won={false} />}
       {scene === 'win' && <GameOverModal won={true} />}
 

@@ -25,3 +25,8 @@ export function scoreForGroup(group: MatchGroup): number {
 export function scoreForGroups(groups: MatchGroup[]): number {
   return groups.reduce((acc, g) => acc + scoreForGroup(g), 0);
 }
+
+/** Очки за ручную активацию бустера (удаление по области без match-групп). */
+export function scoreForBoosterClear(tileCount: number): number {
+  return tileCount * 18;
+}

@@ -1,5 +1,6 @@
 import type { Board } from './Board';
 import type { MatchGroup, TilePosition } from '@core/types';
+import { isNormalTileType } from './boosterTypes';
 
 // Поиск совпадений: горизонтальные и вертикальные линии длиной ≥ 3,
 // а также объединение пересечений в "крест".
@@ -12,7 +13,12 @@ export function findMatches(board: Board): MatchGroup[] {
     for (let c = 1; c <= board.cols; c++) {
       const cur = c < board.cols ? board.get(c, r) : null;
       const prev = board.get(c - 1, r);
-      const same = cur && prev && cur.type === prev.type;
+      const same =
+        cur &&
+        prev &&
+        isNormalTileType(cur.type) &&
+        isNormalTileType(prev.type) &&
+        cur.type === prev.type;
       if (!same) {
         const runLen = c - runStart;
         if (runLen >= 3 && prev) {
@@ -31,7 +37,12 @@ export function findMatches(board: Board): MatchGroup[] {
     for (let r = 1; r <= board.rows; r++) {
       const cur = r < board.rows ? board.get(c, r) : null;
       const prev = board.get(c, r - 1);
-      const same = cur && prev && cur.type === prev.type;
+      const same =
+        cur &&
+        prev &&
+        isNormalTileType(cur.type) &&
+        isNormalTileType(prev.type) &&
+        cur.type === prev.type;
       if (!same) {
         const runLen = r - runStart;
         if (runLen >= 3 && prev) {

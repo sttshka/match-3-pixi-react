@@ -58,13 +58,13 @@ describe('gameMachine', () => {
 
   it('gameover достижим из idle и cascade', () => {
     const m1 = createGameMachine();
-    expect(m1.transition('gameover')).toBe(true);
+    expect(m1.transition('game-over')).toBe(true);
 
     const m2 = createGameMachine();
     m2.transition('input');
     m2.transition('swap');
     m2.transition('resolve');
     m2.transition('cascade');
-    expect(m2.transition('gameover')).toBe(true);
+    expect(m2.transition('game-over')).toBe(true);
   });
 });

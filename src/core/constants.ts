@@ -6,6 +6,13 @@ export const BOARD_ROWS = 8;
 // Сколько типов тайлов в игре (цвета).
 export const TILE_TYPES = 6;
 
+// Спец-тайлы (бустеры). Не участвуют в обычных линиях матч-3 и не спавнятся
+// из refill — появляются из комбо или остаются на поле после каскада.
+export const TILE_TYPE_BOMB = TILE_TYPES;
+export const TILE_TYPE_LINE_ROW = TILE_TYPES + 1;
+export const TILE_TYPE_LINE_COL = TILE_TYPES + 2;
+export const TILE_TYPE_COLOR = TILE_TYPES + 3;
+
 // Размер ячейки в пикселях в "идеальном" разрешении.
 // Физический размер тайла на экране масштабируется в BoardView.
 export const TILE_SIZE = 72;
@@ -41,4 +48,8 @@ export const TILE_COLORS: number[] = [
   0x1dd1a1, // зелёный
   0x9b59ff, // фиолетовый
   0xff9ff3, // розовый
+  0xffa502, // бомба (оранжевый)
+  0x54a0ff, // линия по строке
+  0x5f27cd, // линия по столбцу
+  0x576574, // цветной бустер
 ];

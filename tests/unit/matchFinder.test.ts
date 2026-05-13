@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { findMatches } from '@game/board/matchFinder';
+import { TILE_TYPE_BOMB } from '@core/constants';
 import { applyLayout, makeEmptyBoard } from './helpers';
 
 describe('matchFinder', () => {
@@ -84,6 +85,12 @@ describe('matchFinder', () => {
   it('null-клетки не образуют совпадений', () => {
     const board = makeEmptyBoard(5, 1);
     applyLayout(board, [[0, 0, -1, 0, 0]]);
+    expect(findMatches(board)).toEqual([]);
+  });
+
+  it('спец-тайл разрывает линию одинаковых цветов', () => {
+    const board = makeEmptyBoard(5, 1);
+    applyLayout(board, [[0, 0, TILE_TYPE_BOMB, 0, 0]]);
     expect(findMatches(board)).toEqual([]);
   });
 });

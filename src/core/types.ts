@@ -32,6 +32,8 @@ export interface ResolveResult {
   scoreGained: number;
   // Удалённые позиции.
   removed: TilePosition[];
+  /** Тайлы, превращённые в бустеры на этом шаге (по id — позиция могла измениться после гравитации). */
+  upgradedToBooster?: Array<{ id: number; type: number }>;
 }
 
 export interface CascadeStep {

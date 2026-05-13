@@ -1,6 +1,13 @@
 import { Container, Graphics, type FederatedPointerEvent } from 'pixi.js';
 import { Board } from '@game/board/Board';
-import { nextCascadeStep } from '@game/board/cascade';
+import { applyBoosterClearAndGravity, nextCascadeStep } from '@game/board/cascade';
+import { getBoosterSwapClear } from '@game/board/boosterActivation';
+import {
+  isBombType,
+  isColorBoosterType,
+  isLineColType,
+  isLineRowType,
+} from '@game/board/boosterTypes';
 import { findMatches } from '@game/board/matchFinder';
 import { createGameMachine } from '@game/state/gameMachine';
 import { CommandQueue } from '@game/commands/CommandQueue';
@@ -8,7 +15,7 @@ import { ANIM, BOARD_COLS, BOARD_ROWS, TILE_COLORS, TILE_SIZE } from '@core/cons
 import { bus } from '@core/eventBus';
 import { isAdjacent } from '@utils/math';
 import { tweenAll, tweenTo } from '@utils/tween';
-import type { TilePosition } from '@core/types';
+import type { CascadeStep, TileModel, TilePosition } from '@core/types';
 import { useAppStore } from '@game/state/store';
 import { type IHitArea } from 'pixi.js';
 
@@ -107,17 +114,43 @@ export class BoardController {
   }
 
   private createTileGraphics(type: number): Graphics {
-    const color = TILE_COLORS[type % TILE_COLORS.length];
     const g = new Graphics();
     const half = this.cellSize / 2;
     const pad = this.cellSize * 0.12;
-    g.roundRect(-half + pad, -half + pad, this.cellSize - pad * 2, this.cellSize - pad * 2, 12)
-      .fill({ color })
-      .stroke({ color: 0xffffff, alpha: 0.18, width: 2 });
-    g.circle(-half / 2 + 4, -half / 2 + 4, this.cellSize * 0.12).fill({
-      color: 0xffffff,
-      alpha: 0.25,
-    });
+    const color = TILE_COLORS[type % TILE_COLORS.length]!;
+
+    if (isBombType(type)) {
+      g.circle(0, 0, half - pad * 0.6)
+        .fill({ color })
+        .stroke({ color: 0xffffff, alpha: 0.55, width: 3 });
+      g.circle(-half * 0.35, -half * 0.35, this.cellSize * 0.1).fill({ color: 0xffffee, alpha: 0.95 });
+    } else if (isLineRowType(type)) {
+      g.roundRect(-half + pad, -half + pad, this.cellSize - pad * 2, this.cellSize - pad * 2, 12)
+        .fill({ color })
+        .stroke({ color: 0xffffff, alpha: 0.22, width: 2 });
+      g.roundRect(-half + pad * 2, -this.cellSize * 0.08, this.cellSize - pad * 4, this.cellSize * 0.16, 4)
+        .fill({ color: 0xffffff, alpha: 0.85 });
+    } else if (isLineColType(type)) {
+      g.roundRect(-half + pad, -half + pad, this.cellSize - pad * 2, this.cellSize - pad * 2, 12)
+        .fill({ color })
+        .stroke({ color: 0xffffff, alpha: 0.22, width: 2 });
+      g.roundRect(-this.cellSize * 0.08, -half + pad * 2, this.cellSize * 0.16, this.cellSize - pad * 4, 4)
+        .fill({ color: 0xffffff, alpha: 0.85 });
+    } else if (isColorBoosterType(type)) {
+      g.circle(0, 0, half - pad * 0.8)
+        .fill({ color: 0x2f3542 })
+        .stroke({ color, alpha: 0.9, width: 5 });
+      g.circle(0, 0, half * 0.35).fill({ color, alpha: 0.5 });
+    } else {
+      g.roundRect(-half + pad, -half + pad, this.cellSize - pad * 2, this.cellSize - pad * 2, 12)
+        .fill({ color })
+        .stroke({ color: 0xffffff, alpha: 0.18, width: 2 });
+      g.circle(-half / 2 + 4, -half / 2 + 4, this.cellSize * 0.12).fill({
+        color: 0xffffff,
+        alpha: 0.25,
+      });
+    }
+
     g.eventMode = 'static';
     g.cursor = 'pointer';
     return g;
@@ -189,16 +222,22 @@ export class BoardController {
       await this.animateSwap(a, b);
 
       this.machine.transition('resolve');
+      const boosterClear = getBoosterSwapClear(a, b, this.board);
       const matches = findMatches(this.board);
-      if (matches.length === 0) {
+      if (boosterClear === null && matches.length === 0) {
         bus.emit('swap:invalid', { a, b });
         this.board.swap(a, b);
         await this.animateSwap(a, b);
         this.machine.transition('idle');
         return;
       }
+
       useAppStore.getState().decrementMove();
       this.machine.transition('cascade');
+      if (boosterClear !== null) {
+        const boosterStep = applyBoosterClearAndGravity(this.board, boosterClear);
+        await this.runCascadeStep(boosterStep);
+      }
       await this.resolveCascades();
       this.machine.transition('idle');
     });
@@ -227,19 +266,47 @@ export class BoardController {
       const step = nextCascadeStep(this.board);
       if (!step) break;
       if (this.destroyed) return;
+      await this.runCascadeStep(step);
+    }
+  }
 
-      useAppStore.getState().addScore(step.resolved.scoreGained);
-      bus.emit('matches:found', step.resolved);
-      bus.emit('cascade:step', step);
+  private async runCascadeStep(step: CascadeStep): Promise<void> {
+    useAppStore.getState().addScore(step.resolved.scoreGained);
+    bus.emit('matches:found', step.resolved);
+    bus.emit('cascade:step', step);
 
-      // 1) Эффект "поп" + удаление графики.
-      await this.animatePops(step.resolved.removed);
+    await this.animatePops(step.resolved.removed);
+    this.refreshTilesAtBoosterUpgrades(step.resolved.upgradedToBooster);
 
-      // 2) Анимация падения.
-      await this.animateMoves(step.moves);
+    await this.animateMoves(step.moves);
+    await this.animateSpawned(step.spawned);
+  }
 
-      // 3) Спавн новых тайлов сверху.
-      await this.animateSpawned(step.spawned);
+  private refreshTilesAtBoosterUpgrades(upgrades?: Array<{ id: number; type: number }>): void {
+    if (!upgrades?.length) return;
+    for (const u of upgrades) {
+      let tile: TileModel | null = null;
+      for (let r = 0; r < this.board.rows; r++) {
+        for (let c = 0; c < this.board.cols; c++) {
+          const t = this.board.get(c, r);
+          if (t?.id === u.id) {
+            tile = t;
+            break;
+          }
+        }
+        if (tile) break;
+      }
+      if (!tile) continue;
+      const entry = this.sprites.get(tile.id);
+      if (!entry) continue;
+      const old = entry.view;
+      old.parent?.removeChild(old);
+      old.destroy();
+      const view = this.createTileGraphics(tile.type);
+      const p = this.cellToPixel(tile.col, tile.row);
+      view.position.set(p.x, p.y);
+      this.tilesLayer.addChild(view);
+      this.sprites.set(tile.id, { id: tile.id, view });
     }
   }
 
@@ -293,7 +360,7 @@ export class BoardController {
     await tweenAll(tweens);
   }
 
-  private async animateSpawned(spawned: import('@core/types').TileModel[]): Promise<void> {
+  private async animateSpawned(spawned: TileModel[]): Promise<void> {
     const tweens = spawned.map((tile) => {
       const view = this.createTileGraphics(tile.type);
       const target = this.cellToPixel(tile.col, tile.row);

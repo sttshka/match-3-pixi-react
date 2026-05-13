@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scoreForGroup, scoreForGroups } from '@game/rules/scoring';
+import { scoreForGroup, scoreForGroups, scoreForBoosterClear } from '@game/rules/scoring';
 import type { MatchGroup } from '@core/types';
 
 function row(length: number): MatchGroup {
@@ -31,5 +31,10 @@ describe('scoring', () => {
   it('scoreForGroups суммирует независимые группы', () => {
     expect(scoreForGroups([row(3), row(3)])).toBe(60);
     expect(scoreForGroups([row(3), row(4), row(5)])).toBe(30 + 60 + 120);
+  });
+
+  it('scoreForBoosterClear линейно от числа клеток', () => {
+    expect(scoreForBoosterClear(1)).toBe(18);
+    expect(scoreForBoosterClear(9)).toBe(162);
   });
 });

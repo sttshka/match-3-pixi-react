@@ -47,11 +47,11 @@ describe('cascade.nextCascadeStep', () => {
   it('возвращает корректные moves для упавших тайлов', () => {
     const board = makeEmptyBoard(1, 4);
     applyLayout(board, [[7], [8], [0], [0]]);
-    // Сначала ставим в нижнюю тройку три 9, чтобы было совпадение.
-    applyLayout(board, [[7], [9], [9], [9]]);
+    // Сначала ставим в нижнюю тройку три 2, чтобы было совпадение.
+    applyLayout(board, [[7], [2], [2], [2]]);
     const step = nextCascadeStep(board);
     expect(step).not.toBeNull();
-    // Все три нижних 9 удаляются, 7 падает в самый низ.
+    // Все три нижних 2 удаляются, 7 падает в самый низ.
     expect(board.get(0, 3)?.type).toBe(7);
     // Сверху появляется новый тайл.
     expect(board.get(0, 0)).not.toBeNull();
@@ -94,7 +94,7 @@ describe('cascade.runFullCascade', () => {
       [2, 3, 4, 5, 1],
       [3, 4, 5, 1, 2],
       [4, 5, 1, 2, 3],
-      [9, 9, 9, 2, 3],
+      [0, 0, 0, 2, 3],
     ]);
     runFullCascade(board);
     // После каскада нечего больше схлопывать.

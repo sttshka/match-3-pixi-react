@@ -6,12 +6,10 @@ export function MenuScene() {
     <div className="menu">
       <div className="menu-card">
         <h1>Match-3 Pixi v8</h1>
-        <p>
-          Шаблон проекта на Pixi v8, React и Matter.js.
-          <br />
-          Цель — набрать целевой счёт за выделенное число ходов.
+        <p className="menu-card-lead">
+          Собирай три в ряд. Набери нужные очки до конца ходов.
         </p>
-        <button className="btn" onClick={() => reset()}>
+        <button type="button" className="btn menu-card-cta" onClick={() => reset()}>
           Начать игру
         </button>
       </div>
