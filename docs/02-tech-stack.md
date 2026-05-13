@@ -2,17 +2,17 @@
 
 ## Сводная таблица
 
-| Слой | Технология | Версия | Зачем |
-| --- | --- | --- | --- |
-| Рендер | [Pixi.js](https://pixijs.com) | `^8.6` | WebGL/WebGPU-рендер, `Graphics`, `Sprite`, `ParticleContainer`, `Assets`. |
-| UI / реактивность | [React](https://react.dev) | `^18.3` | Компоненты HUD, меню, модалок. |
-| React ↔ Pixi | [@pixi/react](https://react.pixijs.io) | `^8.0` | Декларативные Pixi-компоненты в JSX (`<pixiContainer/>`), `useTick`, `useApplication`. |
-| Физика | [Matter.js](https://brm.io/matter-js/) | `^0.20` | 2D физика: Engine, World, Bodies, Composite. |
-| Анимации | [GSAP](https://gsap.com) | `^3.12` | Tween-анимации позиций, масштаба, прозрачности; промисификация. |
-| Аудио | [@pixi/sound](https://pixijs.io/sound/) | `^6.0` | Загрузка и воспроизведение звуков с глобальной громкостью/мьютом. |
-| Стейт | [Zustand](https://github.com/pmndrs/zustand) | `^4.5` | Лёгкий стор для UI-стейта (счёт, ходы, сцена). |
-| Событийная шина | [mitt](https://github.com/developit/mitt) | `^3.0` | Слабая связность слоёв через `bus.emit/on`. |
-| Тулинг | TypeScript / Vite / ESLint / Prettier | TS 5 · Vite 5 | Строгая типизация и быстрая сборка. |
+| Слой              | Технология                                   | Версия        | Зачем                                                                                  |
+| ----------------- | -------------------------------------------- | ------------- | -------------------------------------------------------------------------------------- |
+| Рендер            | [Pixi.js](https://pixijs.com)                | `^8.6`        | WebGL/WebGPU-рендер, `Graphics`, `Sprite`, `ParticleContainer`, `Assets`.              |
+| UI / реактивность | [React](https://react.dev)                   | `^18.3`       | Компоненты HUD, меню, модалок.                                                         |
+| React ↔ Pixi      | [@pixi/react](https://react.pixijs.io)       | `^8.0`        | Декларативные Pixi-компоненты в JSX (`<pixiContainer/>`), `useTick`, `useApplication`. |
+| Физика            | [Matter.js](https://brm.io/matter-js/)       | `^0.20`       | 2D физика: Engine, World, Bodies, Composite.                                           |
+| Анимации          | [GSAP](https://gsap.com)                     | `^3.12`       | Tween-анимации позиций, масштаба, прозрачности; промисификация.                        |
+| Аудио             | [@pixi/sound](https://pixijs.io/sound/)      | `^6.0`        | Загрузка и воспроизведение звуков с глобальной громкостью/мьютом.                      |
+| Стейт             | [Zustand](https://github.com/pmndrs/zustand) | `^4.5`        | Лёгкий стор для UI-стейта (счёт, ходы, сцена).                                         |
+| Событийная шина   | [mitt](https://github.com/developit/mitt)    | `^3.0`        | Слабая связность слоёв через `bus.emit/on`.                                            |
+| Тулинг            | TypeScript / Vite / ESLint / Prettier        | TS 5 · Vite 5 | Строгая типизация и быстрая сборка.                                                    |
 
 ## Почему именно так
 

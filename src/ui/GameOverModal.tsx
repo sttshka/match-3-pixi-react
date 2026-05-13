@@ -7,13 +7,14 @@ export function GameOverModal({ won }: { won: boolean }) {
     <div className="modal">
       <div className="modal-card">
         <h2>{won ? 'Победа!' : 'Игра окончена'}</h2>
-        <p>Ваш счёт: <strong>{score}</strong></p>
+        <p>
+          Ваш счёт: <strong>{score}</strong>
+        </p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-          <button className="btn" onClick={() => reset()}>Сыграть ещё</button>
-          <button
-            className="btn secondary"
-            onClick={() => useAppStore.getState().setScene('menu')}
-          >
+          <button className="btn" onClick={() => reset()}>
+            Сыграть ещё
+          </button>
+          <button className="btn secondary" onClick={() => useAppStore.getState().setScene('menu')}>
             В меню
           </button>
         </div>

@@ -35,16 +35,10 @@ export function GameScene({ width, height }: { width: number; height: number }) 
   // Подгоняем масштаб доски под доступную область.
   const boardWidth = BOARD_COLS * TILE_SIZE;
   const boardHeight = BOARD_ROWS * TILE_SIZE;
-  const maxBoardScale = Math.min(
-    (width - 80) / boardWidth,
-    (height - 200) / boardHeight,
-    1.2,
-  );
+  const maxBoardScale = Math.min((width - 80) / boardWidth, (height - 200) / boardHeight, 1.2);
   const scale = Math.max(0.4, maxBoardScale);
   const cx = (width - boardWidth * scale) / 2;
   const cy = (height - boardHeight * scale) / 2 + 24;
 
-  return (
-    <pixiContainer ref={containerRef} x={cx} y={cy} scale={scale} />
-  );
+  return <pixiContainer ref={containerRef} x={cx} y={cy} scale={scale} />;
 }

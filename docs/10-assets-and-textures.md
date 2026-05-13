@@ -12,10 +12,13 @@ Assets.init({
   manifest: {
     bundles: [
       { name: 'preload', assets: [{ alias: 'logo', src: '/img/logo.webp' }] },
-      { name: 'level-1', assets: [
-        { alias: 'tiles', src: '/atlases/tiles.json' },
-        { alias: 'bg', src: '/img/level-1.webp' },
-      ]},
+      {
+        name: 'level-1',
+        assets: [
+          { alias: 'tiles', src: '/atlases/tiles.json' },
+          { alias: 'bg', src: '/img/level-1.webp' },
+        ],
+      },
     ],
   },
 });
@@ -129,14 +132,14 @@ await Assets.unloadBundle('level-1');
 Используйте `AnimatedSprite`:
 
 ```ts
-const frames = ['tile_red_1.png', 'tile_red_2.png', 'tile_red_3.png'].map(
-  (n) => sheet.textures[n],
-);
+const frames = ['tile_red_1.png', 'tile_red_2.png', 'tile_red_3.png'].map((n) => sheet.textures[n]);
 const anim = new AnimatedSprite(frames);
 anim.animationSpeed = 0.2;
 anim.loop = false;
 anim.play();
-anim.onComplete = () => { anim.destroy(); };
+anim.onComplete = () => {
+  anim.destroy();
+};
 ```
 
 ## Шрифты

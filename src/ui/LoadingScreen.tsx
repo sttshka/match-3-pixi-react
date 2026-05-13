@@ -5,9 +5,7 @@ export function LoadingScreen() {
   return (
     <div className="loading">
       <div style={{ display: 'grid', gap: 14, placeItems: 'center' }}>
-        <div style={{ fontWeight: 700, letterSpacing: '0.08em', opacity: 0.7 }}>
-          ЗАГРУЗКА
-        </div>
+        <div style={{ fontWeight: 700, letterSpacing: '0.08em', opacity: 0.7 }}>ЗАГРУЗКА</div>
         <div className="loading-bar">
           <div style={{ width: `${Math.round(progress * 100)}%` }} />
         </div>

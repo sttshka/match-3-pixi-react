@@ -49,12 +49,7 @@ export class PhysicsWorld {
 
 // Создаёт круг-«осколок» с малым радиусом и случайной скоростью.
 // Полезно для эффектов взрыва тайла.
-export function createDebrisBody(
-  x: number,
-  y: number,
-  radius: number,
-  speed = 8,
-): Matter.Body {
+export function createDebrisBody(x: number, y: number, radius: number, speed = 8): Matter.Body {
   const angle = Math.random() * Math.PI * 2;
   const body = Matter.Bodies.circle(x, y, radius, {
     restitution: 0.6,

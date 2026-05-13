@@ -41,8 +41,7 @@ export const useAppStore = create<AppState>((set) => ({
   decrementMove: () =>
     set((s) => {
       const moves = Math.max(0, s.moves - 1);
-      const nextScene: AppScene =
-        moves === 0 && s.score < s.target ? 'gameOver' : s.scene;
+      const nextScene: AppScene = moves === 0 && s.score < s.target ? 'gameOver' : s.scene;
       return { moves, scene: nextScene };
     }),
   reset: () =>

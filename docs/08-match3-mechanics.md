@@ -62,7 +62,7 @@ interface MatchGroup {
 function nextCascadeStep(board) {
   const groups = findMatches(board);
   if (groups.length === 0) return null;
-  const removed = groups.flatMap(g => g.tiles);
+  const removed = groups.flatMap((g) => g.tiles);
   board.remove(removed);
   const moves = board.collapse();
   const spawned = board.refill();

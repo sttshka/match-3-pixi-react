@@ -18,8 +18,7 @@ export async function startGame(page: Page): Promise<void> {
 export function hud(page: Page) {
   // Каждая панель HUD содержит маленький подпись (small) и крупное значение (strong).
   // Возвращаем "ярлыки" этих значений — это устойчиво к локализации/перестановке.
-  const panel = (label: string) =>
-    page.locator('.panel').filter({ hasText: label });
+  const panel = (label: string) => page.locator('.panel').filter({ hasText: label });
   return {
     score: panel('Очки').locator('strong'),
     target: panel('Цель').locator('strong'),
