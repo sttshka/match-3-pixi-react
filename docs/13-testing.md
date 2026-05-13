@@ -1,83 +1,108 @@
 # 13. Тестирование
 
-В проекте используется **двухуровневый подход**:
+В проекте — **двухуровневое тестирование**, оба уровня уже подключены и работают.
 
-- **E2E (Playwright)** — единственный обязательный уровень; уже подключён.
-  Тесты лежат в `tests/e2e/`, конфиг — `playwright.config.ts` в корне.
-- **Unit (Vitest)** — опционально, для чистой доменной логики
-  (`Board`, `matchFinder`, `cascade`, `gameMachine`, `scoring`). См. раздел
-  «Unit-тесты» в конце.
+| Уровень | Инструмент | Что покрывает | Где |
+| --- | --- | --- | --- |
+| Unit | **Vitest** | Чистая TS-логика (`Board`, `matchFinder`, `cascade`, `gameMachine`, `scoring`, `CommandQueue`) | `tests/unit/` |
+| E2E  | **Playwright** | Реальный браузер: меню, переход в игру, HUD, отсутствие console errors | `tests/e2e/` |
 
-## Подключённые инструменты
+Текущее состояние: **40 unit-тестов + 5 E2E-тестов**, все зелёные.
 
-| Инструмент | Назначение | Где живёт |
-| --- | --- | --- |
-| `@playwright/test` | E2E-тесты в реальном браузере | `tests/e2e/*.spec.ts` |
-| Helpers (`gotoApp`, `startGame`, `hud`, `gameCanvas`) | Селекторы и шаги | `tests/e2e/helpers/game.ts` |
-| `playwright.config.ts` | Конфиг + `webServer` (Vite поднимается автоматически) | корень |
-| `.cursor/rules/playwright-tests.mdc` | Правило для Cursor: куда и как писать тесты | `.cursor/rules/` |
-
-## Быстрый старт
+## Команды
 
 ```bash
-npm install
-npx playwright install chromium   # один раз на машину/CI
-npm run test                      # headless
-npm run test:headed               # с видимым окном
-npm run test:ui                   # Playwright UI mode (рекомендуется при разработке)
-npm run test:report               # открыть HTML-репорт после прогона
+# Unit (Vitest)
+npm run test             # все unit-тесты, один прогон
+npm run test:watch       # watch-режим
+npm run test:coverage    # с покрытием → coverage/index.html
+
+# E2E (Playwright)
+npm run test:e2e         # headless
+npm run test:e2e:headed  # с видимым окном
+npm run test:e2e:ui      # Playwright UI mode (рекомендую при разработке)
+npm run test:e2e:report  # открыть HTML-репорт последнего прогона
+
+# Оба
+npm run test:all
 ```
 
-`playwright.config.ts` сам поднимает Vite на `http://localhost:5173`
-через `webServer` и переиспользует уже запущенный сервер локально.
+Перед первым запуском E2E: `npx playwright install chromium`.
 
-## Где лежит что
+## Структура
 
 ```
 tests/
+├── unit/
+│   ├── helpers.ts          ← makeBoard, makeEmptyBoard, applyLayout, readLayout, isFull
+│   ├── Board.test.ts
+│   ├── matchFinder.test.ts
+│   ├── cascade.test.ts
+│   ├── gameMachine.test.ts
+│   ├── scoring.test.ts
+│   └── CommandQueue.test.ts
 └── e2e/
     ├── helpers/
-    │   └── game.ts          ← общие шаги (gotoApp, startGame, hud, gameCanvas)
-    ├── menu.spec.ts         ← проверка стартового меню
-    └── game.spec.ts         ← проверка игровой сцены и HUD
+    │   └── game.ts          ← gotoApp, startGame, hud, gameCanvas
+    ├── menu.spec.ts
+    └── game.spec.ts
 ```
 
-## Шаблон нового теста
+Конфиги:
+
+- `vitest.config.ts` — наследует резолв-алиасы от `vite.config.ts`
+  (мерджем `mergeConfig`), Node-окружение, входы — `tests/unit/**/*.test.ts`.
+- `playwright.config.ts` — `webServer` сам поднимает Vite, baseURL,
+  retries для CI, screenshots/video/trace на падениях.
+
+## Unit-тесты: правила
+
+### Layout-first ассерты
+
+Хелпер `applyLayout` принимает матрицу `number[][]`, где значение —
+это `type` тайла, а `-1` — пусто. Тест читается как ASCII-art:
 
 ```ts
-import { test, expect } from '@playwright/test';
-import { gotoApp, startGame, hud } from './helpers/game';
-
-test.describe('<фича>', () => {
-  test('<пользовательский сценарий>', async ({ page }) => {
-    await gotoApp(page);
-    await startGame(page);
-
-    const { score } = hud(page);
-    await expect(score).toHaveText('0');
-  });
-});
+const board = makeEmptyBoard(5, 5);
+applyLayout(board, [
+  [2, 3, 1, 4, 5],
+  [6, 7, 1, 8, 9],
+  [1, 1, 1, 0, 2],   // ← горизонталь длины 3
+  [3, 4, 5, 6, 7],
+  [8, 9, 0, 1, 2],
+]);
+expect(findMatches(board)).toHaveLength(1);
 ```
 
-## Правила, важные для match-3
+### Подводный камень: разноцветный фон
 
-1. **Игра недетерминирована.** RNG генерирует доску по случайному seed'у.
-   В тестах **не** проверяйте конкретные значения счёта или конкретные
-   тайлы. Проверяйте **инварианты**:
-   - HUD остался числом (`/^\d+$/`)
-   - Канвас видим, ненулевой
-   - Нет console errors
-2. **Для детерминированных проверок** добавляйте seed (например, через
-   query-param `?seed=42`) и пробрасывайте его в `Board`. Это позволит
-   ассертить конкретные позиции.
-3. **Канвас тестируется через `boundingBox`** и `page.mouse.click(x, y)` —
-   внутренних DOM-узлов у тайлов нет.
-4. **Не используйте `page.waitForTimeout` как способ ждать UI.** Это
-   допустимо только для пауз "дать игре поработать" в стресс-тестах.
-   В остальных случаях — `await expect(...).toBeVisible()` (с встроенным
-   retry).
+Если в качестве "фона" поставить один тип (например, везде `9`), вокруг
+полезной фигуры **возникнут лишние линии**. В шаблонных тестах фон
+заполняется разными типами, как в примере выше.
 
-## Селекторы — по ролям и тексту
+### Помощник для коллапса
+
+`applyLayout` **не пересоздаёт** тайлы — он меняет поле `type` у
+существующих, сохраняя `id`. Это критично для тестов `cascade`, где
+проверяется, что упавший тайл — это **тот же самый тайл** по `id`,
+а не новый из `refill`.
+
+### Глушим намеренный шум
+
+В тесте «ошибка в команде не блокирует очередь» `CommandQueue.tick()`
+выводит `console.error`. Чтобы не засорять вывод:
+
+```ts
+const errSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+// ...
+errSpy.mockRestore();
+```
+
+То же — для `gameMachine` (`console.warn` при невалидном переходе).
+
+## E2E-тесты: правила
+
+### Селекторы — по ролям и тексту
 
 ```ts
 page.getByRole('button', { name: 'Начать игру' });
@@ -85,93 +110,75 @@ page.locator('.panel').filter({ hasText: 'Очки' }).locator('strong');
 page.locator('canvas');
 ```
 
-Не привязывайтесь к классам типа `.panel` напрямую (могут меняться при
-рефакторинге CSS) — используйте хелперы.
+Хелперы в `tests/e2e/helpers/game.ts` инкапсулируют это.
 
-## Отладка падений
+### Канвас тестируется через `boundingBox`
 
-- HTML-репорт после прогона: `npm run test:report`.
-- Скриншоты, видео и trace падений лежат в `test-results/`.
-- Trace открывается так:
-  ```bash
-  npx playwright show-trace test-results/<имя>/trace.zip
-  ```
-- В коде теста можно поставить `await page.pause()` для остановки и
-  открытия Playwright Inspector.
+Pixi не выставляет внутреннюю структуру в DOM. Кликаем по координатам:
+
+```ts
+const box = await gameCanvas(page).boundingBox();
+await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+```
+
+### Игра недетерминирована
+
+RNG генерирует доску по случайному seed'у. В E2E **не** проверяйте
+конкретные значения счёта или тайлы. Только инварианты:
+
+- HUD остался числом (`/^\d+$/`)
+- Канвас видим, ненулевой
+- В консоли нет ошибок
+
+Для **детерминированных** проверок: добавьте `?seed=42` query-param и
+пробросьте в `Board`. Появится возможность ассертить конкретные позиции
+после клика.
+
+### Не используйте `waitForTimeout` как способ ждать UI
+
+`expect(...).toBeVisible()` имеет встроенный retry. `waitForTimeout`
+оправдан только для пауз "дать игре поработать" в стресс-тестах.
 
 ## CI
 
-Playwright корректно работает в GitHub Actions:
+Минимальный workflow для GitHub Actions:
 
 ```yaml
 name: CI
 on: [push, pull_request]
 jobs:
-  e2e:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm run build
       - run: npm run test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
-          retention-days: 7
 ```
 
-## Unit-тесты (опционально, Vitest)
+## Cursor-правила
 
-Если/когда захотите unit-тесты доменной логики:
+В `.cursor/rules/` лежат два правила, которые Cursor подтянет
+автоматически при работе с тестами:
 
-```bash
-npm i -D vitest @testing-library/react @testing-library/jest-dom jsdom
-```
+- `vitest-tests.mdc` — для `tests/unit/**`
+- `playwright-tests.mdc` — для `tests/e2e/**`
 
-Минимальный конфиг можно встроить в `vite.config.ts`:
+## Чек-лист для расширения тестов
 
-```ts
-import { defineConfig } from 'vitest/config';
-// ...
-test: {
-  environment: 'node',
-  include: ['tests/unit/**/*.test.ts'],
-},
-```
-
-Пример теста `matchFinder`:
-
-```ts
-import { describe, expect, it } from 'vitest';
-import { Board } from '@game/board/Board';
-import { findMatches } from '@game/board/matchFinder';
-
-describe('matchFinder', () => {
-  it('finds horizontal line of 3', () => {
-    const board = new Board(5, 1, 1);
-    // helper, который явно подменяет cells (см. tests/unit/helpers.ts)
-    setRow(board, 0, [0, 0, 0, 1, 1]);
-    const m = findMatches(board);
-    expect(m).toHaveLength(1);
-    expect(m[0].length).toBe(3);
-    expect(m[0].kind).toBe('row');
-  });
-});
-```
-
-## Чек-лист тестов для match-3 (на будущее)
-
-- [ ] Свопы без матча — откатываются, ход не тратится.
-- [ ] Свопы с матчем — удаляют тайлы и обновляют счёт.
-- [ ] Каскад работает рекурсивно (минимум 2 шага).
-- [ ] `gameMachine` запрещает невалидные переходы.
-- [ ] `Board` не оставляет пустых ячеек после `refill`.
-- [ ] `scoreForGroup` для `cross` ≥ score для `row` той же длины.
-- [ ] `seed` даёт воспроизводимую генерацию.
+- [ ] Бустеры: бомба, линейный, цветной (когда появятся в `cascade.ts`).
+- [ ] Анти-deadlock: проверка `findFirstValidMove` (когда появится).
+- [ ] Seed-тесты конкретных сценариев (длинный каскад из 4+ шагов).
+- [ ] Snapshot тестов через `toHaveScreenshot` для меню/HUD.
+- [ ] Property-based тесты `Board.collapse`/`refill` с fast-check (опционально).

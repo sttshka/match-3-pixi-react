@@ -1,14 +1,25 @@
 import { SCORE_BY_LENGTH } from '@core/constants';
 import type { MatchGroup } from '@core/types';
 
-// Подсчёт очков за группу совпадений. Для крестов используем линейную шкалу.
+// Подсчёт очков за группу совпадений.
+// Для длин, отсутствующих в таблице, продолжаем линейной экстраполяцией
+// от максимума таблицы — это гарантирует монотонный рост очков с длиной.
+const TABLE_MAX_LENGTH = Math.max(...Object.keys(SCORE_BY_LENGTH).map(Number));
+const OVERFLOW_BONUS_PER_TILE = 50;
+
+function tableScore(length: number): number {
+  const direct = SCORE_BY_LENGTH[length];
+  if (direct !== undefined) return direct;
+  const fallback = SCORE_BY_LENGTH[TABLE_MAX_LENGTH];
+  return fallback + (length - TABLE_MAX_LENGTH) * OVERFLOW_BONUS_PER_TILE;
+}
+
 export function scoreForGroup(group: MatchGroup): number {
-  const table = SCORE_BY_LENGTH;
   if (group.kind === 'cross') {
-    const base = table[5] ?? 120;
+    const base = SCORE_BY_LENGTH[5] ?? 120;
     return base + Math.max(0, group.length - 5) * 30;
   }
-  return table[group.length] ?? table[3] + (group.length - 3) * 30;
+  return tableScore(group.length);
 }
 
 export function scoreForGroups(groups: MatchGroup[]): number {

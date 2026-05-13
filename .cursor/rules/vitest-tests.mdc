@@ -1,0 +1,92 @@
+---
+description: Соглашения по unit-тестам Vitest в этом проекте
+globs: tests/unit/**/*.ts,vitest.config.ts
+alwaysApply: false
+---
+
+# Unit-тесты на Vitest
+
+Все unit-проверки **чистой доменной логики** пишем на **Vitest**.
+Каталог — `tests/unit/`. Конфиг — `vitest.config.ts` в корне (наследует
+алиасы от `vite.config.ts`, т.е. `@game/...`, `@core/...` работают).
+
+## Что покрывают unit-тесты
+
+Только pure TS из `src/`:
+
+- `src/game/board/` — Board, matchFinder, cascade
+- `src/game/state/gameMachine.ts`
+- `src/game/commands/CommandQueue.ts`
+- `src/game/rules/scoring.ts`
+- `src/utils/` — math, random
+
+**НЕ покрывают**: Pixi-рендер, React-компоненты, MatterJS-интеграцию.
+Для них есть Playwright (`tests/e2e/`).
+
+## Где что лежит
+
+```
+tests/
+└── unit/
+    ├── helpers.ts          ← makeBoard, makeEmptyBoard, applyLayout, readLayout, isFull
+    ├── Board.test.ts
+    ├── matchFinder.test.ts
+    ├── cascade.test.ts
+    ├── gameMachine.test.ts
+    ├── scoring.test.ts
+    └── CommandQueue.test.ts
+```
+
+## Базовые правила
+
+1. **Один файл на модуль** в `src/`. `matchFinder.ts` → `matchFinder.test.ts`.
+2. **Импорты через алиасы**: `import { Board } from '@game/board/Board'`,
+   `import { applyLayout } from './helpers'`.
+3. **Layout-first ассерты**. Для проверки доски используйте
+   `applyLayout(board, [[...],[...]])` и `readLayout(board)` —
+   тесты читаются как ASCII-art.
+4. **Layout фон должен быть разноцветным.** Если поставить вокруг
+   T-формы один `9`-фон, вокруг возникнут лишние совпадения.
+5. **`-1` в layout = пустая клетка (null).**
+6. **Шумные `console.error`/`warn` глушим через `vi.spyOn`** —
+   см. `CommandQueue.test.ts`.
+
+## Шаблон нового теста
+
+```ts
+import { describe, expect, it } from 'vitest';
+import { findMatches } from '@game/board/matchFinder';
+import { applyLayout, makeEmptyBoard } from './helpers';
+
+describe('<модуль>', () => {
+  it('<инвариант>', () => {
+    const board = makeEmptyBoard(4, 1);
+    applyLayout(board, [[0, 0, 0, 1]]);
+    const m = findMatches(board);
+    expect(m).toHaveLength(1);
+    expect(m[0].length).toBe(3);
+  });
+});
+```
+
+## Команды
+
+```bash
+npm run test            # запуск всех unit-тестов один раз
+npm run test:watch      # watch-режим
+npm run test:coverage   # с покрытием (HTML отчёт в coverage/)
+```
+
+E2E (Playwright) — отдельная цель: `npm run test:e2e`.
+Оба сразу — `npm run test:all`.
+
+## Чего НЕ делать
+
+- ❌ Не пишите тесты Pixi/React в `tests/unit/` — это для Playwright.
+- ❌ Не плодите test-only public методы в доменных классах.
+  Используйте локальный access через `as unknown as { cells: ... }`
+  только внутри `tests/unit/helpers.ts`.
+- ❌ Не запускайте Vitest в `--watch` в CI — используйте `vitest run`
+  (это и есть `npm run test`).
+- ❌ Не добавляйте `.test.ts` в `src/` — Vitest их не подхватит,
+  и это противоречит соглашениям проекта.

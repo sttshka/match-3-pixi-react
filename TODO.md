@@ -78,11 +78,14 @@
 - [x] Подключён Playwright (`tests/e2e/`, `playwright.config.ts`)
 - [x] Cursor-правило `.cursor/rules/playwright-tests.mdc` для агента
 - [x] E2E: меню, переход в игру, HUD, отсутствие console errors, кликaeмость канваса
-- [ ] Unit-тесты `matchFinder`, `cascade`, `gameMachine` (Vitest)
-- [ ] Детерминированные seed-тесты конкретных совпадений
+- [x] Подключён Vitest (`tests/unit/`, `vitest.config.ts`)
+- [x] Cursor-правило `.cursor/rules/vitest-tests.mdc` для агента
+- [x] Unit-тесты `Board`, `matchFinder`, `cascade`, `gameMachine`, `scoring`, `CommandQueue` (40 тестов)
+- [ ] Детерминированные seed-тесты конкретных каскадов 4+ шагов
 - [ ] Snapshot/Visual regression (Playwright `toHaveScreenshot`)
-- [ ] CI: lint + типы + тесты + e2e
+- [ ] CI: lint + типы + unit + build + e2e
 - [ ] Pre-commit (lint-staged + husky)
+- [ ] Property-based тесты `Board.collapse/refill` (fast-check)
 
 ## Этап 8. Расширение
 

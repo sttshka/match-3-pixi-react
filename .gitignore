@@ -11,6 +11,15 @@ coverage
 vite.config.js
 vite.config.d.ts
 
+# Артефакты `tsc -b` параллельно с .ts (если кто-то отключит noEmit).
+# Эти файлы НЕ должны попасть в репозиторий — рендером занимается Vite.
+src/**/*.js
+src/**/*.d.ts
+!src/**/*.config.js
+
+# Coverage отчёт Vitest
+coverage/
+
 # Playwright MCP — accessibility-снапшоты и логи консоли,
 # которые сохраняет MCP-сервер при автоматизации браузера.
 .playwright-mcp/

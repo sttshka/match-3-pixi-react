@@ -33,27 +33,34 @@ src/
   utils/       math, random (seeded RNG), tween (GSAP-обёртка)
   App.tsx, main.tsx, index.css
 
-tests/e2e/     Playwright-тесты + helpers/
+tests/
+  unit/        Vitest, чистая логика (helpers.ts + *.test.ts)
+  e2e/         Playwright + helpers/
 docs/          вся документация (на русском)
-.cursor/rules/ Cursor-правила (Playwright и т.п.)
+.cursor/rules/ Cursor-правила (vitest-tests.mdc, playwright-tests.mdc)
 public/        статика (robots.txt, llms.txt, favicon)
 ```
 
 ## Команды
 
 ```bash
-npm run dev          # Vite dev-server (http://localhost:5173)
-npm run build        # tsc -b && vite build
-npm run preview      # preview prod-сборки
-npm run lint         # ESLint
-npm run typecheck    # tsc -b --pretty
-npm run format       # Prettier
-npm run test         # Playwright headless
-npm run test:headed  # Playwright с окном
-npm run test:ui      # Playwright UI mode
+npm run dev           # Vite dev-server (http://localhost:5173)
+npm run build         # tsc -b && vite build
+npm run preview       # preview prod-сборки
+npm run lint          # ESLint
+npm run typecheck     # tsc -b --pretty
+npm run format        # Prettier
+
+# Тесты
+npm run test          # Vitest (unit) — быстрый
+npm run test:watch    # Vitest в watch-режиме
+npm run test:coverage # покрытие
+npm run test:e2e      # Playwright (E2E)
+npm run test:e2e:ui   # Playwright UI mode
+npm run test:all      # оба прогона подряд
 ```
 
-Перед первым запуском тестов: `npx playwright install chromium`.
+Перед первым запуском E2E: `npx playwright install chromium`.
 
 ## Соглашения (обязательно к чтению при изменениях)
 
@@ -86,7 +93,7 @@ npm run test:ui      # Playwright UI mode
 | Ассеты, текстуры, атласы | `docs/10-assets-and-textures.md` |
 | Звук | `docs/11-audio.md` |
 | Производительность, FPS, профайлинг | `docs/12-performance.md` |
-| Тестирование (Playwright/Vitest) | `docs/13-testing.md` + `.cursor/rules/playwright-tests.mdc` |
+| Тестирование (Vitest unit + Playwright E2E) | `docs/13-testing.md` + `.cursor/rules/vitest-tests.mdc` + `.cursor/rules/playwright-tests.mdc` |
 | Типичные ошибки | `docs/15-troubleshooting.md` |
 | Дорожная карта расширения | `docs/16-roadmap.md` + `TODO.md` |
 
@@ -97,8 +104,10 @@ npm run test:ui      # Playwright UI mode
 - ❌ Не возвращайтесь к React 18 — `@pixi/react@^8.0.5` требует React 19.
 - ❌ Не создавайте `vite.config.js`/`vite.config.d.ts` вручную — это
   артефакты `tsc -b`, они в `.gitignore`.
-- ❌ Не пишите unit-тесты в `tests/e2e/`. Чистая логика — это Vitest,
-  а Playwright — для UI.
+- ❌ Не пишите unit-тесты в `tests/e2e/`. Чистая логика — это Vitest
+  (`tests/unit/`), Playwright — для UI.
+- ❌ Не добавляйте `.test.ts` в `src/` — Vitest их не подхватит,
+  это противоречит соглашениям.
 - ❌ Не вызывайте `extend()` внутри компонента — только в `src/core/pixiExtend.ts`
   на уровне модуля.
 - ❌ Не используйте `page.waitForTimeout` в тестах как способ ждать UI;

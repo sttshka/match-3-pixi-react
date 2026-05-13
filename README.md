@@ -19,9 +19,12 @@ npm run preview      # локальный preview сборки
 npm run lint         # ESLint
 npm run typecheck    # tsc -b
 npm run format       # Prettier
-npm run test         # E2E-тесты (Playwright, поднимает Vite сам)
-npm run test:ui      # Playwright UI mode (интерактивно)
-npm run test:report  # открыть HTML-репорт последнего прогона
+npm run test         # Vitest (unit-тесты доменной логики)
+npm run test:watch   # Vitest watch-режим
+npm run test:coverage  # покрытие → coverage/index.html
+npm run test:e2e     # Playwright E2E (поднимает Vite сам)
+npm run test:e2e:ui  # Playwright UI mode (интерактивно)
+npm run test:all     # unit + E2E
 ```
 
 Требуется Node.js `>=18.18`.
@@ -96,11 +99,13 @@ src/
   App.tsx              — корневой компонент
   main.tsx             — точка входа
 tests/
-  e2e/                 — E2E-тесты Playwright
-    helpers/           — общие хелперы (gotoApp, startGame, hud)
+  unit/                — Vitest, чистая логика (Board, matchFinder, cascade…)
+  e2e/                 — Playwright + helpers/ (gotoApp, startGame, hud)
 .cursor/
-  rules/               — Cursor Rules для агента (см. playwright-tests.mdc)
+  rules/               — Cursor Rules: vitest-tests.mdc, playwright-tests.mdc
+AGENTS.md              — навигационный файл для AI-агентов
 playwright.config.ts   — конфиг Playwright (сам поднимает Vite)
+vitest.config.ts       — конфиг Vitest (наследует алиасы Vite)
 ```
 
 ## Лицензия
