@@ -42,3 +42,18 @@ export function hud(page: Page) {
 export function gameCanvas(page: Page) {
   return page.locator('canvas');
 }
+
+/** Горизонтальный свайп по канвасу (CSS px), для match-3 ввода. */
+export async function swipeCanvasHorizontal(
+  page: Page,
+  box: { x: number; y: number; width: number; height: number },
+  opts?: { delta?: number },
+): Promise<void> {
+  const delta = opts?.delta ?? 100;
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  await page.mouse.move(cx, cy);
+  await page.mouse.down();
+  await page.mouse.move(cx + delta, cy, { steps: 10 });
+  await page.mouse.up();
+}

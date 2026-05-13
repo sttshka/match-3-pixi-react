@@ -15,7 +15,7 @@ function tableScore(length: number): number {
 }
 
 export function scoreForGroup(group: MatchGroup): number {
-  if (group.kind === 'cross' || group.kind === 'cluster') {
+  if (group.kind === 'cross') {
     const base = SCORE_BY_LENGTH[5] ?? 120;
     return base + Math.max(0, group.length - 5) * 30;
   }

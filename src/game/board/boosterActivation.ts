@@ -10,6 +10,7 @@ import {
   isNormalTileType,
   isPlaneType,
   isSpecialTileType,
+  isTapActivatedBoosterType,
 } from './boosterTypes';
 
 function key(p: TilePosition): string {
@@ -112,16 +113,24 @@ function mostFrequentNormalColor(board: Board): number | null {
   return best > 0 ? bestT : null;
 }
 
-/** Кандидаты для «удара» самолёта: любая занятая клетка кроме позиции самолёта. */
+/** Кандидаты для «удара» самолёта: цели уровня и препятствия — в приоритете, затем остальные. */
 function listPlaneTargetCandidates(board: Board, exclude: TilePosition): TilePosition[] {
-  const out: TilePosition[] = [];
+  const items: Array<{ pos: TilePosition; pri: number }> = [];
   for (let r = 0; r < board.rows; r++) {
     for (let c = 0; c < board.cols; c++) {
       if (c === exclude.col && r === exclude.row) continue;
-      if (board.get(c, r)) out.push({ col: c, row: r });
+      const t = board.get(c, r);
+      if (!t) continue;
+      let pri = 0;
+      if (t.isGoal) pri += 200;
+      if (t.obstacleLayers !== undefined && t.obstacleLayers > 0) pri += 100;
+      items.push({ pos: { col: c, row: r }, pri });
     }
   }
-  return out.sort((p, q) => (p.row === q.row ? p.col - q.col : p.row - q.row));
+  items.sort((x, y) =>
+    x.pri !== y.pri ? y.pri - x.pri : x.pos.row !== y.pos.row ? x.pos.row - y.pos.row : x.pos.col - y.pos.col,
+  );
+  return items.map((x) => x.pos);
 }
 
 function pickDeterministicTarget(board: Board, exclude: TilePosition, salt: number): TilePosition | null {
@@ -140,43 +149,10 @@ function planeSwapClear(board: Board, planePos: TilePosition, salt: number): Til
   return uniqPositions(out);
 }
 
-/** Три удара самолётика (два самолёта): три разные цели. */
-function triplePlaneHits(board: Board, salt: number): TilePosition[] {
-  const cands = listPlaneTargetCandidates(board, { col: -1, row: -1 });
-  if (cands.length === 0) return [];
-  const used = new Set<string>();
-  const out: TilePosition[] = [];
-  for (let i = 0; i < 3; i++) {
-    let idx = Math.abs(salt + i * 9973) % cands.length;
-    let guard = 0;
-    while (guard < cands.length && used.has(key(cands[idx]!))) {
-      idx = (idx + 1) % cands.length;
-      guard++;
-    }
-    const pick = cands[idx]!;
-    used.add(key(pick));
-    out.push(pick, ...orthogonalNeighbors(board, pick));
-  }
-  return uniqPositions(out);
-}
-
-/** Homescapes bomb+rocket: три полосы по строкам и три по столбцам вокруг центра пары. */
+/** Homescapes bomb+rocket: сначала три полных столбца (ширина 3), затем три полные строки. */
 function threeRowsThreeColsBand(board: Board, centerRow: number, centerCol: number): TilePosition[] {
   const out: TilePosition[] = [];
   const seen = new Set<string>();
-  for (let dr = -1; dr <= 1; dr++) {
-    const row = centerRow + dr;
-    if (row < 0 || row >= board.rows) continue;
-    for (let c = 0; c < board.cols; c++) {
-      const p = { col: c, row };
-      const k = key(p);
-      if (seen.has(k)) continue;
-      if (board.get(c, row)) {
-        seen.add(k);
-        out.push(p);
-      }
-    }
-  }
   for (let dc = -1; dc <= 1; dc++) {
     const col = centerCol + dc;
     if (col < 0 || col >= board.cols) continue;
@@ -185,6 +161,19 @@ function threeRowsThreeColsBand(board: Board, centerRow: number, centerCol: numb
       const k = key(p);
       if (seen.has(k)) continue;
       if (board.get(col, r)) {
+        seen.add(k);
+        out.push(p);
+      }
+    }
+  }
+  for (let dr = -1; dr <= 1; dr++) {
+    const row = centerRow + dr;
+    if (row < 0 || row >= board.rows) continue;
+    for (let c = 0; c < board.cols; c++) {
+      const p = { col: c, row };
+      const k = key(p);
+      if (seen.has(k)) continue;
+      if (board.get(c, row)) {
         seen.add(k);
         out.push(p);
       }
@@ -244,16 +233,6 @@ function expandBoosterChain(board: Board, seeds: TilePosition[]): TilePosition[]
   return out;
 }
 
-function allOccupiedCells(board: Board): TilePosition[] {
-  const out: TilePosition[] = [];
-  for (let r = 0; r < board.rows; r++) {
-    for (let c = 0; c < board.cols; c++) {
-      if (board.get(c, r)) out.push({ col: c, row: r });
-    }
-  }
-  return out;
-}
-
 /** Два ракетных бустера: одна полная строка + один полный столбец (Homescapes). */
 function twoRocketsCombo(board: Board, a: TilePosition, b: TilePosition): TilePosition[] {
   const sorted = [a, b].sort((p, q) => (p.row === q.row ? p.col - q.col : p.row - q.row));
@@ -279,24 +258,33 @@ function tryTwoSpecialCombo(
   const lineB = isLineBoosterType(tb.type);
 
   if (colorA && colorB) {
-    return allOccupiedCells(board);
+    return undefined;
   }
 
   if (bombA && bombB) {
-    return uniqPositions([...cellsChebyshev(board, a, 2), ...cellsChebyshev(board, b, 2)]);
+    const c = comboCenter(a, b);
+    return cellsChebyshev(board, c, 2);
   }
 
   if (planeA && planeB) {
-    return triplePlaneHits(board, ta.id * 31 + tb.id * 17);
+    const salt = ta.id * 31 + tb.id * 17;
+    const sorted = [a, b].sort((p, q) => (p.row !== q.row ? p.row - q.row : p.col - q.col));
+    const firstFrom = sorted[0]!;
+    const center = comboCenter(a, b);
+    const first = planeSwapClear(board, firstFrom, salt);
+    const waves: TilePosition[] = [];
+    for (let i = 0; i < 3; i++) {
+      waves.push(...planeSwapClear(board, center, salt + 7919 * (i + 1)));
+    }
+    return uniqPositions([...first, ...waves]);
   }
 
   if ((planeA && bombB) || (bombA && planeB)) {
     const planePos = planeA ? a : b;
-    const bombPos = bombA ? a : b;
     const salt = ta.id + tb.id;
     const target = pickDeterministicTarget(board, planePos, salt);
     const planeZone = planeSwapClear(board, planePos, salt);
-    const bombZone = target ? cellsChebyshev(board, target, 1) : cellsChebyshev(board, bombPos, 1);
+    const bombZone = target ? cellsChebyshev(board, target, 1) : cellsChebyshev(board, planePos, 1);
     return uniqPositions([...planeZone, ...bombZone]);
   }
 
@@ -420,9 +408,14 @@ export function getBoosterSwapClear(
 
   if (base === null) return null;
 
-  if (sa && sb && isColorBoosterType(ta.type) && isColorBoosterType(tb.type)) {
-    return uniqPositions(base);
-  }
-
   return uniqPositions(expandBoosterChain(board, base));
+}
+
+/** Одно нажатие по ракете, бомбе или самолётику (без свопа с соседом). */
+export function getBoosterTapClear(board: Board, pos: TilePosition): TilePosition[] | null {
+  const t = board.get(pos.col, pos.row);
+  if (!t || !isTapActivatedBoosterType(t.type)) return null;
+  const seeds = oneBoosterBlast(board, pos, t);
+  if (seeds.length === 0) return null;
+  return uniqPositions(expandBoosterChain(board, seeds));
 }

@@ -12,6 +12,10 @@ export interface TileModel {
   type: TileType;
   col: number;
   row: number;
+  /** Слои препятствия (коробка): радужный+радужный снимает один слой. */
+  obstacleLayers?: number;
+  /** Цель уровня — приоритетная цель для самолётика. */
+  isGoal?: boolean;
 }
 
 export type SceneId = 'boot' | 'menu' | 'game' | 'gameOver';
@@ -22,8 +26,7 @@ export interface MatchGroup {
   // Длина (количество тайлов в группе). Для крестов считается общее число.
   length: number;
   // Ориентация линии, 'cross' (пересечение линий), 'square' (квадрат 2×2),
-  // 'cluster' — связная область ≥5 не в одну линию (бомба, Homescapes).
-  kind: 'row' | 'col' | 'cross' | 'square' | 'cluster';
+  kind: 'row' | 'col' | 'cross' | 'square';
 }
 
 export interface ResolveResult {

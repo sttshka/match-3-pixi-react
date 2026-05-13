@@ -1,7 +1,12 @@
 import { Container, Graphics, type FederatedPointerEvent } from 'pixi.js';
 import { Board } from '@game/board/Board';
-import { applyBoosterClearAndGravity, nextCascadeStep } from '@game/board/cascade';
-import { getBoosterSwapClear, swapIsHorizontal } from '@game/board/boosterActivation';
+import {
+  applyBoosterClearAndGravity,
+  applyRainbowDuoClearAndGravity,
+  nextCascadeStep,
+} from '@game/board/cascade';
+import { getBoosterSwapClear, getBoosterTapClear, swapIsHorizontal } from '@game/board/boosterActivation';
+import { isColorBoosterType, isTapActivatedBoosterType } from '@game/board/boosterTypes';
 import { drawBoosterTile } from '@rendering/boosterGraphics';
 import { collectMatchGroups } from '@game/board/matchFinder';
 import { createGameMachine } from '@game/state/gameMachine';
@@ -39,7 +44,20 @@ export class BoardController {
   private readonly boardWidth: number;
   private readonly boardHeight: number;
 
-  private selected: TilePosition | null = null;
+  /** Порог (px): меньше — «тап» (активация бустера). */
+  private readonly tapBoostThresholdPx = 14;
+  /** Минимальная длина свайпа в CSS px. */
+  private readonly swipeMinPx = 26;
+  /** Доминантная ось: |dx| должен превосходить |dy| не меньше чем в ratio раз (и наоборот). */
+  private readonly swipeAxisRatio = 1.2;
+
+  private gestureFrom: TilePosition | null = null;
+  private gesturePointerId: number | null = null;
+  private gestureStartClientX = 0;
+  private gestureStartClientY = 0;
+  private gestureMaxDistance = 0;
+  private gesturePressedSprite: Graphics | null = null;
+  private gestureSurface: HTMLElement | null = null;
   private destroyed = false;
 
   constructor(root: Container, opts?: { cellSize?: number }) {
@@ -56,6 +74,7 @@ export class BoardController {
     this.root.eventMode = 'static';
     this.root.hitArea = { contains: () => true } as IHitArea;
     this.root.on('pointerdown', this.onPointerDown);
+    this.tilesLayer.sortableChildren = true;
 
     this.board = new Board();
     this.board.generateInitial();
@@ -66,6 +85,7 @@ export class BoardController {
 
   destroy(): void {
     this.destroyed = true;
+    this.cancelActiveGesture();
     this.root.off('pointerdown', this.onPointerDown);
     this.queue.clear();
     this.root.removeChildren();
@@ -147,45 +167,216 @@ export class BoardController {
     return { col, row };
   }
 
-  // --- INPUT ---
+  private findCanvasSurface(start: EventTarget | null): HTMLCanvasElement | null {
+    let n: Node | null = start as Node | null;
+    while (n) {
+      if (n instanceof HTMLCanvasElement) return n;
+      if (n instanceof HTMLElement) n = n.parentElement;
+      else n = n.parentNode;
+    }
+    return null;
+  }
+
+  private cancelActiveGesture(): void {
+    this.detachGestureSurfaceListeners();
+    if (this.gestureFrom !== null) {
+      const from = this.gestureFrom;
+      this.gestureFrom = null;
+      this.gesturePointerId = null;
+      if (this.gesturePressedSprite) {
+        const p = this.cellToPixel(from.col, from.row);
+        this.gesturePressedSprite.position.set(p.x, p.y);
+        this.gesturePressedSprite.scale.set(1);
+        this.gesturePressedSprite.zIndex = 0;
+        this.gesturePressedSprite = null;
+      }
+    }
+    this.gestureSurface = null;
+  }
+
+  /** Соседняя клетка по направлению свайпа (экранные координаты, ось Y вниз). */
+  private neighborFromSwipe(
+    from: TilePosition,
+    dxClient: number,
+    dyClient: number,
+  ): TilePosition | null {
+    const adx = Math.abs(dxClient);
+    const ady = Math.abs(dyClient);
+    const min = this.swipeMinPx;
+    const r = this.swipeAxisRatio;
+
+    if (adx >= ady * r && adx >= min) {
+      const col = from.col + (dxClient > 0 ? 1 : -1);
+      const row = from.row;
+      if (col < 0 || col >= BOARD_COLS || row < 0 || row >= BOARD_ROWS) return null;
+      return { col, row };
+    }
+    if (ady >= adx * r && ady >= min) {
+      const col = from.col;
+      const row = from.row + (dyClient > 0 ? 1 : -1);
+      if (col < 0 || col >= BOARD_COLS || row < 0 || row >= BOARD_ROWS) return null;
+      return { col, row };
+    }
+    return null;
+  }
+
+  // --- INPUT (свайп к соседу; короткий тап по бустеру — активация) ---
 
   private onPointerDown = (e: FederatedPointerEvent): void => {
     if (this.queue.isBusy) return;
+    if (this.gestureFrom !== null) return;
     const local = this.tilesLayer.toLocal(e.global);
     const pos = this.pixelToCell(local.x, local.y);
     if (!pos) return;
-    bus.emit('tile:tap', pos);
 
-    if (!this.selected) {
-      this.selected = pos;
-      this.highlight(pos, true);
-      return;
-    }
-    if (this.selected.col === pos.col && this.selected.row === pos.row) {
-      this.highlight(pos, false);
-      this.selected = null;
-      return;
-    }
-    if (isAdjacent(this.selected, pos)) {
-      const a = this.selected;
-      const b = pos;
-      this.highlight(a, false);
-      this.selected = null;
-      this.attemptSwap(a, b);
-      return;
-    }
-    this.highlight(this.selected, false);
-    this.selected = pos;
-    this.highlight(pos, true);
-  };
-
-  private highlight(pos: TilePosition, on: boolean): void {
     const tile = this.board.get(pos.col, pos.row);
     if (!tile) return;
-    const s = this.sprites.get(tile.id);
-    if (!s) return;
-    void tweenTo(s.view, { scale: on ? 1.08 : 1, duration: 0.12 });
+
+    this.gestureFrom = pos;
+    this.gesturePointerId = e.pointerId;
+    const ne = e.nativeEvent;
+    this.gestureStartClientX = ne.clientX;
+    this.gestureStartClientY = ne.clientY;
+    this.gestureMaxDistance = 0;
+    this.gestureSurface = this.findCanvasSurface(ne.target);
+
+    const entry = this.sprites.get(tile.id);
+    if (entry) {
+      this.gesturePressedSprite = entry.view;
+      entry.view.zIndex = 1000;
+      void tweenTo(entry.view, { scale: 1.06, duration: 0.08 });
+    } else {
+      this.gesturePressedSprite = null;
+    }
+
+    if (!this.gestureSurface) {
+      this.gestureFrom = null;
+      this.gesturePointerId = null;
+      this.gesturePressedSprite = null;
+      return;
+    }
+
+    if (this.gestureSurface.setPointerCapture) {
+      try {
+        this.gestureSurface.setPointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    this.attachGestureSurfaceListeners();
+  };
+
+  private attachGestureSurfaceListeners(): void {
+    const el = this.gestureSurface;
+    if (el) {
+      el.addEventListener('pointermove', this.onGestureSurfacePointerMove);
+      el.addEventListener('pointerup', this.onGestureSurfacePointerUp);
+      el.addEventListener('pointercancel', this.onGestureSurfacePointerUp);
+    } else {
+      window.addEventListener('pointermove', this.onGestureSurfacePointerMove, true);
+      window.addEventListener('pointerup', this.onGestureSurfacePointerUp, true);
+      window.addEventListener('pointercancel', this.onGestureSurfacePointerUp, true);
+    }
   }
+
+  private detachGestureSurfaceListeners(): void {
+    const el = this.gestureSurface;
+    const pid = this.gesturePointerId;
+    if (el) {
+      el.removeEventListener('pointermove', this.onGestureSurfacePointerMove);
+      el.removeEventListener('pointerup', this.onGestureSurfacePointerUp);
+      el.removeEventListener('pointercancel', this.onGestureSurfacePointerUp);
+    } else {
+      window.removeEventListener('pointermove', this.onGestureSurfacePointerMove, true);
+      window.removeEventListener('pointerup', this.onGestureSurfacePointerUp, true);
+      window.removeEventListener('pointercancel', this.onGestureSurfacePointerUp, true);
+    }
+    if (el && pid !== null && 'releasePointerCapture' in el) {
+      try {
+        el.releasePointerCapture(pid);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  private onGestureSurfacePointerMove = (e: PointerEvent): void => {
+    if (this.gesturePointerId !== null && e.pointerId !== this.gesturePointerId) return;
+    if (this.gestureFrom === null) return;
+    const dx = e.clientX - this.gestureStartClientX;
+    const dy = e.clientY - this.gestureStartClientY;
+    const d = Math.hypot(dx, dy);
+    if (d > this.gestureMaxDistance) this.gestureMaxDistance = d;
+  };
+
+  private onGestureSurfacePointerUp = (e: PointerEvent): void => {
+    if (this.gesturePointerId !== null && e.pointerId !== this.gesturePointerId) return;
+    if (this.gestureFrom === null) return;
+
+    const from = this.gestureFrom;
+    const maxD = this.gestureMaxDistance;
+    const dx = e.clientX - this.gestureStartClientX;
+    const dy = e.clientY - this.gestureStartClientY;
+
+    this.detachGestureSurfaceListeners();
+    this.gestureFrom = null;
+    this.gesturePointerId = null;
+    this.gestureSurface = null;
+
+    const tile = this.board.get(from.col, from.row);
+
+    const restorePressedVisual = (): void => {
+      if (this.gesturePressedSprite) {
+        const p = this.cellToPixel(from.col, from.row);
+        void tweenAll([
+          {
+            target: this.gesturePressedSprite,
+            props: {
+              x: p.x,
+              y: p.y,
+              scale: 1,
+              duration: 0.18,
+              ease: 'power2.out',
+            },
+          },
+        ]);
+        this.gesturePressedSprite.zIndex = 0;
+        this.gesturePressedSprite = null;
+      }
+    };
+
+    if (!tile) {
+      restorePressedVisual();
+      return;
+    }
+
+    const isTapBoost =
+      maxD < this.tapBoostThresholdPx && isTapActivatedBoosterType(tile.type);
+
+    if (isTapBoost) {
+      bus.emit('tile:tap', from);
+      restorePressedVisual();
+      this.attemptTapBooster(from);
+      return;
+    }
+
+    const to = this.neighborFromSwipe(from, dx, dy);
+    if (to !== null && isAdjacent(from, to)) {
+      bus.emit('tile:tap', from);
+      if (this.gesturePressedSprite) {
+        const p = this.cellToPixel(from.col, from.row);
+        this.gesturePressedSprite.position.set(p.x, p.y);
+        this.gesturePressedSprite.scale.set(1);
+        this.gesturePressedSprite.zIndex = 0;
+        this.gesturePressedSprite = null;
+      }
+      this.attemptSwap(from, to);
+      return;
+    }
+
+    restorePressedVisual();
+  };
 
   // --- ИГРОВЫЕ ХОДЫ ---
 
@@ -196,12 +387,34 @@ export class BoardController {
     this.queue.push(async () => {
       bus.emit('swap:start', { a, b });
       this.board.swap(a, b);
+      const taSnap = this.board.get(a.col, a.row);
+      const tbSnap = this.board.get(b.col, b.row);
+      if (taSnap && tbSnap) {
+        const sa = this.sprites.get(taSnap.id)?.view;
+        const sb = this.sprites.get(tbSnap.id)?.view;
+        if (sa && sb) {
+          const pa = this.cellToPixel(a.col, a.row);
+          const pb = this.cellToPixel(b.col, b.row);
+          sa.position.set(pb.x, pb.y);
+          sb.position.set(pa.x, pa.y);
+        }
+      }
       await this.animateSwap(a, b);
 
       this.machine.transition('resolve');
-      const boosterClear = getBoosterSwapClear(a, b, this.board, swapIsHorizontal(a, b));
+      const ta = this.board.get(a.col, a.row);
+      const tb = this.board.get(b.col, b.row);
+      const doubleRainbow =
+        ta !== null &&
+        tb !== null &&
+        isColorBoosterType(ta.type) &&
+        isColorBoosterType(tb.type);
+
+      const boosterClear = doubleRainbow
+        ? null
+        : getBoosterSwapClear(a, b, this.board, swapIsHorizontal(a, b));
       const matches = collectMatchGroups(this.board);
-      if (boosterClear === null && matches.length === 0) {
+      if (!doubleRainbow && boosterClear === null && matches.length === 0) {
         bus.emit('swap:invalid', { a, b });
         this.board.swap(a, b);
         await this.animateSwap(a, b);
@@ -211,11 +424,34 @@ export class BoardController {
 
       useAppStore.getState().decrementMove();
       this.machine.transition('cascade');
-      if (boosterClear !== null) {
+      if (doubleRainbow) {
+        const duoStep = applyRainbowDuoClearAndGravity(this.board);
+        await this.runCascadeStep(duoStep);
+      } else if (boosterClear !== null) {
         const boosterStep = applyBoosterClearAndGravity(this.board, boosterClear);
         await this.runCascadeStep(boosterStep);
       }
       await this.resolveCascades(b);
+      this.machine.transition('idle');
+    });
+  }
+
+  private attemptTapBooster(pos: TilePosition): void {
+    if (!this.machine.transition('input')) return;
+    const clear = getBoosterTapClear(this.board, pos);
+    if (clear === null || clear.length === 0) {
+      this.machine.transition('idle');
+      return;
+    }
+    this.machine.transition('swap');
+    this.queue.push(async () => {
+      bus.emit('booster:tap', pos);
+      this.machine.transition('resolve');
+      useAppStore.getState().decrementMove();
+      this.machine.transition('cascade');
+      const step = applyBoosterClearAndGravity(this.board, clear);
+      await this.runCascadeStep(step);
+      await this.resolveCascades(pos);
       this.machine.transition('idle');
     });
   }

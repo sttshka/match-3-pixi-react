@@ -8,6 +8,7 @@ export type GameEvents = {
   'tile:tap': TilePosition;
   'swap:start': { a: TilePosition; b: TilePosition };
   'swap:invalid': { a: TilePosition; b: TilePosition };
+  'booster:tap': TilePosition;
   'matches:found': ResolveResult;
   'cascade:step': CascadeStep;
   'score:changed': { score: number; delta: number };

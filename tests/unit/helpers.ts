@@ -68,6 +68,19 @@ export function readLayout(board: Board): Array<Array<number | null>> {
   return out;
 }
 
+/** Для тестов: цель уровня / слои препятствия на существующем тайле. */
+export function setTileFlags(
+  board: Board,
+  col: number,
+  row: number,
+  flags: { obstacleLayers?: number; isGoal?: boolean },
+): void {
+  const t = board.get(col, row);
+  if (!t) return;
+  if (flags.obstacleLayers !== undefined) t.obstacleLayers = flags.obstacleLayers;
+  if (flags.isGoal !== undefined) t.isGoal = flags.isGoal;
+}
+
 /** Проверка: на доске нет пустых клеток. */
 export function isFull(board: Board): boolean {
   for (let r = 0; r < board.rows; r++) {

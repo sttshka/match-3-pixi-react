@@ -17,6 +17,39 @@ function uniqRemovePositions(positions: TilePosition[]): TilePosition[] {
   return out;
 }
 
+const LAYER_STRIP_SCORE = 30;
+
+/**
+ * Радужный + радужный: снос всех фишек; у клеток с `obstacleLayers` снимается один слой
+ * (препятствие остаётся, пока слои не исчерпаны).
+ */
+export function applyRainbowDuoClearAndGravity(board: Board): CascadeStep {
+  const removed: TilePosition[] = [];
+  let layerStrips = 0;
+  for (let r = 0; r < board.rows; r++) {
+    for (let c = 0; c < board.cols; c++) {
+      const t = board.get(c, r);
+      if (!t) continue;
+      if (t.obstacleLayers !== undefined && t.obstacleLayers > 0) {
+        t.obstacleLayers--;
+        layerStrips++;
+        if (t.obstacleLayers <= 0) delete t.obstacleLayers;
+        continue;
+      }
+      removed.push({ col: c, row: r });
+    }
+  }
+  board.remove(removed);
+  const resolved: ResolveResult = {
+    groups: [],
+    scoreGained: scoreForBoosterClear(removed.length) + layerStrips * LAYER_STRIP_SCORE,
+    removed,
+  };
+  const moves = board.collapse();
+  const spawned = board.refill();
+  return { resolved, moves, spawned };
+}
+
 /** Удаление по списку клеток (активация бустера), гравитация и refill — один шаг каскада. */
 export function applyBoosterClearAndGravity(board: Board, positions: TilePosition[]): CascadeStep {
   const remove = uniqRemovePositions(positions);

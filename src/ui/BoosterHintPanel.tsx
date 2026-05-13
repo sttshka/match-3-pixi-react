@@ -63,8 +63,10 @@ export function BoosterHintPanel() {
             Бонусы на поле
           </h3>
           <p className="booster-hint-lead">
-            Собери фигуру — появится бонус. Потом поменяй его местами с соседней клеткой, чтобы
-            включить.
+            Собери фигуру — появится бонус. <strong>Перетащи</strong> фишку на соседнюю клетку, чтобы
+            поменять местами (в том числе два бонуса для комбо). Ракету, бомбу и самолётик можно
+            также включить <strong>коротким тапом</strong> без движения. Радужный шар — только своп
+            с соседней фишкой нужного цвета.
           </p>
 
           <p className="booster-hint-sub">Как получить</p>
@@ -74,21 +76,21 @@ export function BoosterHintPanel() {
                 <IconLineBooster />
               </span>
               <p>
-                Четыре в ряд или в столбик — стрела: горизонтальный матч даёт бонус, который чистит
-                <strong> столбец</strong>; вертикальный — <strong>строку</strong> (как в Homescapes).
+                Четыре в ряд или в столбик — <strong>ракета</strong>: горизонтальный матч даёт бонус,
+                который чистит <strong>столбец</strong>; вертикальный — <strong>строку</strong>.
               </p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconColorBooster />
               </span>
-              <p>Пять в ряд — радужный шар.</p>
+              <p>Пять в ряд или в столбик — радужный шар.</p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconBombBooster />
               </span>
-              <p>Линии крест-накрест, L/T или связный кластер из пяти не в одну линию — бомба.</p>
+              <p>Пять или шесть фишек в форме Г, Т или плюса (пересечение линий) — бомба.</p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
@@ -98,40 +100,51 @@ export function BoosterHintPanel() {
             </div>
           </div>
 
-          <p className="booster-hint-sub">Поменяй с соседом</p>
+          <p className="booster-hint-sub">Короткий тап или свайп на соседа</p>
           <div className="booster-hint-rows">
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconLineClear />
               </span>
               <p>
-                Стрела: чистится целая строка или целый столбец по <strong>виду</strong> бонуса
-                (полоска на тайле горизонтальная или вертикальная), направление свопа не важно.
+                <strong>Ракета</strong> — короткий тап или свайп на соседа: чистится целая строка
+                или целый столбец по виду бонуса (полоска на тайле).
               </p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconColorClear />
               </span>
-              <p>Радужный и обычный тайл — пропадут все того же цвета, что и обычный.</p>
+              <p>
+                <strong>Радужный</strong> — свайп на соседнюю обычную фишку: пропадут все того же
+                цвета.
+              </p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconExplode3x3 />
               </span>
-              <p>Бомба — квадрат три на три вокруг неё.</p>
+              <p>
+                <strong>Бомба</strong> — короткий тап или свайп на соседа: квадрат три на три
+                вокруг неё.
+              </p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconPlaneSquare />
               </span>
-              <p>Самолётик — соседи по кресту и ещё один удар по выбранной клетке.</p>
+              <p>
+                <strong>Самолётик</strong> — короткий тап или свайп на соседа: крест вокруг себя и
+                удар по цели (в приоритете цели уровня и препятствия), плюс крест вокруг цели.
+              </p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconColorBooster />
               </span>
-              <p>Два радужных рядом — очищают всё поле.</p>
+              <p>
+                Два радужных рядом — очищают всё поле; у клеток с препятствием снимается один слой.
+              </p>
             </div>
           </div>
 
@@ -141,19 +154,21 @@ export function BoosterHintPanel() {
               <span className="booster-hint-icon" aria-hidden>
                 <IconTwoSpecialCombo />
               </span>
-              <p>Поменяй два бонуса местами, если они соседи — их силы складываются.</p>
+              <p>Перетащи один бонус на соседний, если оба — бонусы: их силы складываются.</p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconBigExplosion />
               </span>
-              <p>Две бомбы — очень большой взрыв.</p>
+              <p>Две бомбы — вдвое больший радиус взрыва (5×5 вокруг центра пары).</p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconPlaneSquare />
               </span>
-              <p>Два самолётика — три удара по разным клеткам.</p>
+              <p>
+                Два самолётика — один полный взлёт, затем три волны из центра между бустерами.
+              </p>
             </div>
           </div>
         </div>

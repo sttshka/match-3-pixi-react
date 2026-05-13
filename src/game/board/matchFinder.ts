@@ -58,7 +58,7 @@ export function findMatches(board: Board): MatchGroup[] {
   return mergeCrosses(groups);
 }
 
-/** Квадраты 2×2 из четырёх обычных тайлов одного цвета (ракета). */
+/** Квадраты 2×2 из четырёх обычных тайлов одного цвета (самолётик). */
 export function findSquareMatches(board: Board): MatchGroup[] {
   const groups: MatchGroup[] = [];
   for (let r = 0; r < board.rows - 1; r++) {
@@ -93,67 +93,9 @@ export function findSquareMatches(board: Board): MatchGroup[] {
   return groups;
 }
 
-function isDegenerateLine(tiles: TilePosition[]): boolean {
-  const rows = new Set(tiles.map((t) => t.row));
-  const cols = new Set(tiles.map((t) => t.col));
-  return rows.size === 1 || cols.size === 1;
-}
-
-/**
- * Связные (4-соседство) области ≥5 одного цвета, не лежащие на одной прямой
- * (линии ≥5 обрабатываются как disco). Homescapes: «компактный кластер» → бомба.
- */
-export function findClusterBombMatches(board: Board): MatchGroup[] {
-  const assigned = new Set<string>();
-  const groups: MatchGroup[] = [];
-
-  for (let r = 0; r < board.rows; r++) {
-    for (let c = 0; c < board.cols; c++) {
-      const k = `${c}:${r}`;
-      if (assigned.has(k)) continue;
-      const t0 = board.get(c, r);
-      if (!t0 || !isNormalTileType(t0.type)) continue;
-
-      const typ = t0.type;
-      const comp: TilePosition[] = [];
-      const q: TilePosition[] = [{ col: c, row: r }];
-      const queued = new Set<string>([k]);
-
-      while (q.length > 0) {
-        const p = q.shift()!;
-        const t = board.get(p.col, p.row);
-        if (!t || !isNormalTileType(t.type) || t.type !== typ) continue;
-        comp.push(p);
-        for (const [dc, dr] of [
-          [1, 0],
-          [-1, 0],
-          [0, 1],
-          [0, -1],
-        ] as const) {
-          const nc = p.col + dc;
-          const nr = p.row + dr;
-          const nk = `${nc}:${nr}`;
-          if (queued.has(nk)) continue;
-          const tn = board.get(nc, nr);
-          if (!tn || !isNormalTileType(tn.type) || tn.type !== typ) continue;
-          queued.add(nk);
-          q.push({ col: nc, row: nr });
-        }
-      }
-
-      for (const cell of comp) assigned.add(`${cell.col}:${cell.row}`);
-
-      if (comp.length < 5) continue;
-      if (isDegenerateLine(comp)) continue;
-      groups.push({ tiles: comp, length: comp.length, kind: 'cluster' });
-    }
-  }
-  return groups;
-}
-
-/** Линии (с крестами) + квадраты 2×2 + кластеры для бомбы — один шаг каскада. */
+/** Линии (с крестами) + квадраты 2×2 — один шаг каскада. Бомба — только из креста 5–6 клеток (Г / Т / +). */
 export function collectMatchGroups(board: Board): MatchGroup[] {
-  return [...findMatches(board), ...findSquareMatches(board), ...findClusterBombMatches(board)];
+  return [...findMatches(board), ...findSquareMatches(board)];
 }
 
 // Объединяет пересекающиеся row+col группы в один "cross" — это нужно

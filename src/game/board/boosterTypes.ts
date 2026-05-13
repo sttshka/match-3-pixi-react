@@ -38,3 +38,8 @@ export function isPlaneType(type: number): boolean {
 export function isSpecialTileType(type: number): boolean {
   return !isNormalTileType(type);
 }
+
+/** Ракета, бомба и самолётик активируются одним нажатием (без свопа). */
+export function isTapActivatedBoosterType(type: number): boolean {
+  return isBombType(type) || isPlaneType(type) || isLineBoosterType(type);
+}

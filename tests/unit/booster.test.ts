@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { nextCascadeStep } from '@game/board/cascade';
-import { getBoosterSwapClear, swapIsHorizontal } from '@game/board/boosterActivation';
+import { applyRainbowDuoClearAndGravity, nextCascadeStep } from '@game/board/cascade';
+import { getBoosterSwapClear, getBoosterTapClear, swapIsHorizontal } from '@game/board/boosterActivation';
 import { planBoosterSurvivorsFromMatches } from '@game/board/boosterFromMatch';
 import {
   TILE_TYPE_BOMB,
@@ -9,7 +9,7 @@ import {
   TILE_TYPE_LINE_ROW,
   TILE_TYPE_PLANE,
 } from '@core/constants';
-import { applyLayout, makeEmptyBoard } from './helpers';
+import { applyLayout, makeEmptyBoard, setTileFlags } from './helpers';
 
 describe('planBoosterSurvivorsFromMatches', () => {
   it('линия из 3 — только удаление', () => {
@@ -28,7 +28,7 @@ describe('planBoosterSurvivorsFromMatches', () => {
     expect(plan.remove).toHaveLength(3);
   });
 
-  it('вертикаль из 4 — стрела чистит строку (LINE_ROW, Homescapes)', () => {
+  it('вертикаль из 4 — ракета чистит строку (LINE_ROW)', () => {
     const plan = planBoosterSurvivorsFromMatches([
       {
         tiles: [
@@ -44,7 +44,7 @@ describe('planBoosterSurvivorsFromMatches', () => {
     expect(plan.upgrades).toEqual([{ col: 0, row: 1, type: TILE_TYPE_LINE_ROW }]);
   });
 
-  it('линия из 4 — полосатый чистит столбец (LINE_COL, Homescapes)', () => {
+  it('горизонталь из 4 — ракета чистит столбец (LINE_COL)', () => {
     const plan = planBoosterSurvivorsFromMatches([
       {
         tiles: [
@@ -97,7 +97,7 @@ describe('planBoosterSurvivorsFromMatches', () => {
     expect(plan.remove).toHaveLength(4);
   });
 
-  it('квадрат 2×2 — ракета', () => {
+  it('квадрат 2×2 — бумажный самолётик', () => {
     const plan = planBoosterSurvivorsFromMatches([
       {
         tiles: [
@@ -112,6 +112,21 @@ describe('planBoosterSurvivorsFromMatches', () => {
     ]);
     expect(plan.upgrades).toEqual([{ col: 0, row: 0, type: TILE_TYPE_PLANE }]);
     expect(plan.remove).toHaveLength(3);
+  });
+
+  it('крест из 7 фишек — бомба не создаётся, все клетки снимаются', () => {
+    const tiles = [
+      { col: 0, row: 2 },
+      { col: 1, row: 2 },
+      { col: 2, row: 2 },
+      { col: 3, row: 2 },
+      { col: 2, row: 1 },
+      { col: 2, row: 3 },
+      { col: 2, row: 4 },
+    ];
+    const plan = planBoosterSurvivorsFromMatches([{ tiles, length: 7, kind: 'cross' }]);
+    expect(plan.upgrades).toHaveLength(0);
+    expect(plan.remove).toHaveLength(7);
   });
 });
 
@@ -207,20 +222,29 @@ describe('getBoosterSwapClear', () => {
     expect(cleared.length).toBe(2);
   });
 
-  it('два радужных: очищают всё поле', () => {
+  it('два радужных: getBoosterSwapClear — null; applyRainbowDuo очищает поле', () => {
     const board = makeEmptyBoard(3, 2);
     applyLayout(board, [
       [TILE_TYPE_COLOR, TILE_TYPE_COLOR, 1],
       [2, 3, 4],
     ]);
     board.swap({ col: 0, row: 0 }, { col: 1, row: 0 });
-    const cleared = getBoosterSwapClear(
-      { col: 0, row: 0 },
-      { col: 1, row: 0 },
-      board,
-      swapIsHorizontal({ col: 0, row: 0 }, { col: 1, row: 0 }),
-    )!;
-    expect(cleared.length).toBe(6);
+    expect(
+      getBoosterSwapClear(
+        { col: 0, row: 0 },
+        { col: 1, row: 0 },
+        board,
+        swapIsHorizontal({ col: 0, row: 0 }, { col: 1, row: 0 }),
+      ),
+    ).toBeNull();
+    const board2 = makeEmptyBoard(3, 2);
+    applyLayout(board2, [
+      [TILE_TYPE_COLOR, TILE_TYPE_COLOR, 1],
+      [2, 3, 4],
+    ]);
+    board2.swap({ col: 0, row: 0 }, { col: 1, row: 0 });
+    const step = applyRainbowDuoClearAndGravity(board2);
+    expect(step.resolved.removed.length).toBe(6);
   });
 
   it('LINE_COL: горизонтальный своп всё равно чистит столбец бустера', () => {
@@ -238,5 +262,49 @@ describe('getBoosterSwapClear', () => {
     )!;
     expect(cleared.map((p) => p.col).every((c) => c === 1)).toBe(true);
     expect(cleared.length).toBe(2);
+  });
+});
+
+describe('getBoosterTapClear', () => {
+  it('бомба по тапу: 3×3 вокруг клетки', () => {
+    const board = makeEmptyBoard(5, 3);
+    applyLayout(board, [
+      [3, 3, 3, 3, 3],
+      [3, TILE_TYPE_BOMB, 3, 3, 3],
+      [3, 3, 3, 3, 3],
+    ]);
+    const cleared = getBoosterTapClear(board, { col: 1, row: 1 })!;
+    expect(cleared.length).toBe(9);
+  });
+});
+
+describe('applyRainbowDuoClearAndGravity', () => {
+  it('снимает один слой obstacleLayers и удаляет остальные тайлы', () => {
+    const board = makeEmptyBoard(2, 1);
+    applyLayout(board, [[0, 1]]);
+    setTileFlags(board, 0, 0, { obstacleLayers: 2 });
+    const step = applyRainbowDuoClearAndGravity(board);
+    expect(step.resolved.removed).toHaveLength(1);
+    expect(step.resolved.removed[0]).toEqual({ col: 1, row: 0 });
+    expect(board.get(0, 0)?.obstacleLayers).toBe(1);
+  });
+});
+
+describe('комбо два бустера', () => {
+  it('бомба+бомба: один центр с радиусом 2 (5×5)', () => {
+    const board = makeEmptyBoard(7, 7);
+    const fill = 5;
+    const layout: number[][] = Array.from({ length: 7 }, () => Array(7).fill(fill));
+    layout[2][2] = TILE_TYPE_BOMB;
+    layout[4][4] = TILE_TYPE_BOMB;
+    applyLayout(board, layout);
+    board.swap({ col: 2, row: 2 }, { col: 4, row: 4 });
+    const cleared = getBoosterSwapClear(
+      { col: 2, row: 2 },
+      { col: 4, row: 4 },
+      board,
+      swapIsHorizontal({ col: 2, row: 2 }, { col: 4, row: 4 }),
+    )!;
+    expect(cleared.length).toBe(25);
   });
 });

@@ -21,12 +21,12 @@ function sortTiles(tiles: TilePosition[]): TilePosition[] {
 }
 
 /**
- * Homescapes: disco (линия ≥5) → бомба (крест / кластер) → самолёт (2×2) → стрела (линия 4).
+ * Радужный (линия ≥5) → бомба (крест 5–6, Г/Т/+) → самолёт (2×2) → ракета (линия 4).
  */
 function groupPriority(g: MatchGroup): number {
   if (g.kind === 'square') return 60;
-  if (g.kind === 'cross' || g.kind === 'cluster') return 80;
-  if (g.length >= 5) return 100;
+  if (g.kind === 'cross') return 80;
+  if ((g.kind === 'row' || g.kind === 'col') && g.length >= 5) return 100;
   if (g.length === 4) return 50;
   return 20;
 }
@@ -94,7 +94,7 @@ function pickPivotWithMoveTarget(
 }
 
 /**
- * После collectMatchGroups: disco → бомба → самолёт → стрела → линия 3.
+ * После collectMatchGroups: радужный (линия ≥5) → бомба (крест 5–6) → самолёт → ракета → линия 3.
  * Клетка не может стать двумя бустерами — пересечения по приоритету.
  *
  * @param moveTarget — клетка «куда» свопнули (второй тайл хода); спавн бустера там, если клетка в паттерне.
@@ -124,41 +124,45 @@ export function planBoosterSurvivorsFromMatches(
       continue;
     }
 
-    if (g.kind === 'cross' || g.kind === 'cluster') {
-      if (tilesAvail.length < 3) continue;
-      let pivot: TilePosition;
-      if (moveTarget && tilesAvail.some((t) => key(t) === key(moveTarget))) {
-        pivot = moveTarget;
+    if (g.kind === 'cross') {
+      // Бомба только из 5 или 6 фишек в форме пересечения линий (Г / Т / +).
+      if (tilesAvail.length < 5 || tilesAvail.length > 6) {
+        // не continue — сносим как обычное совпадение ниже
       } else {
-        pivot = pickCrossBoosterPivot(tilesAvail);
-      }
-      if (survivorKeys.has(key(pivot))) {
-        const alt = pickPivotWithMoveTarget(
-          tilesAvail,
-          moveTarget,
-          Math.floor((tilesAvail.length - 1) / 2),
-          survivorKeys,
-        );
-        if (!alt) {
-          for (const t of tilesAvail) removeKeys.add(key(t));
+        let pivot: TilePosition;
+        if (moveTarget && tilesAvail.some((t) => key(t) === key(moveTarget))) {
+          pivot = moveTarget;
+        } else {
+          pivot = pickCrossBoosterPivot(tilesAvail);
+        }
+        if (survivorKeys.has(key(pivot))) {
+          const alt = pickPivotWithMoveTarget(
+            tilesAvail,
+            moveTarget,
+            Math.floor((tilesAvail.length - 1) / 2),
+            survivorKeys,
+          );
+          if (!alt) {
+            for (const t of tilesAvail) removeKeys.add(key(t));
+            continue;
+          }
+          upgrades.push({ col: alt.col, row: alt.row, type: TILE_TYPE_BOMB });
+          survivorKeys.add(key(alt));
+          for (const t of tilesAvail) {
+            if (key(t) !== key(alt)) removeKeys.add(key(t));
+          }
           continue;
         }
-        upgrades.push({ col: alt.col, row: alt.row, type: TILE_TYPE_BOMB });
-        survivorKeys.add(key(alt));
+        upgrades.push({ col: pivot.col, row: pivot.row, type: TILE_TYPE_BOMB });
+        survivorKeys.add(key(pivot));
         for (const t of tilesAvail) {
-          if (key(t) !== key(alt)) removeKeys.add(key(t));
+          if (key(t) !== key(pivot)) removeKeys.add(key(t));
         }
         continue;
       }
-      upgrades.push({ col: pivot.col, row: pivot.row, type: TILE_TYPE_BOMB });
-      survivorKeys.add(key(pivot));
-      for (const t of tilesAvail) {
-        if (key(t) !== key(pivot)) removeKeys.add(key(t));
-      }
-      continue;
     }
 
-    if (g.length >= 5) {
+    if ((g.kind === 'row' || g.kind === 'col') && g.length >= 5) {
       if (tilesAvail.length < 3) continue;
       const mid = Math.floor((sortTiles(tilesAvail).length - 1) / 2);
       const pivot = pickPivotWithMoveTarget(tilesAvail, moveTarget, mid, survivorKeys);
@@ -176,7 +180,7 @@ export function planBoosterSurvivorsFromMatches(
 
     if (g.length === 4) {
       if (tilesAvail.length < 3) continue;
-      /** Homescapes: горизонтальная линия 4 → стрела чистит столбец; вертикальная → строку. */
+      /** Ракета: горизонтальная линия 4 → чистит столбец; вертикальная → строку. */
       const lineType = g.kind === 'row' ? TILE_TYPE_LINE_COL : TILE_TYPE_LINE_ROW;
       const pivot = pickPivotWithMoveTarget(tilesAvail, moveTarget, 1, survivorKeys);
       if (!pivot) {

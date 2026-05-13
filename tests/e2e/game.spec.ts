@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { gotoApp, startGame, hud, gameCanvas } from './helpers/game';
+import { gotoApp, startGame, hud, gameCanvas, swipeCanvasHorizontal } from './helpers/game';
 
 test.describe('Игровая сцена', () => {
   test('канвас рендерится непустым (ненулевые размеры)', async ({ page }) => {
@@ -29,9 +29,7 @@ test.describe('Игровая сцена', () => {
     expect(errors, `console errors:\n${errors.join('\n')}`).toEqual([]);
   });
 
-  test('два соседних клика по доске не ломают HUD (счёт остаётся валидным числом)', async ({
-    page,
-  }) => {
+  test('свайп по доске не ломает HUD (счёт остаётся валидным числом)', async ({ page }) => {
     await gotoApp(page);
     await startGame(page);
 
@@ -39,17 +37,11 @@ test.describe('Игровая сцена', () => {
     const box = await canvas.boundingBox();
     expect(box).not.toBeNull();
 
-    // Кликаем по центру и сразу по соседней клетке справа.
-    // Конкретный результат свопа недетерминирован (зависит от seed'а),
-    // поэтому проверяем только корректность HUD после взаимодействия.
-    const cx = box!.x + box!.width / 2;
-    const cy = box!.y + box!.height / 2;
-    await page.mouse.click(cx, cy);
-    await page.mouse.click(cx + 60, cy);
-    await page.waitForTimeout(800);
+    // Результат свопа недетерминирован (seed), проверяем инвариант HUD.
+    await swipeCanvasHorizontal(page, box!);
 
     const { score, moves } = hud(page);
-    await expect(score).toHaveText(/^\d+$/);
-    await expect(moves).toHaveText(/^\d+$/);
+    await expect(score).toHaveText(/^\d+$/, { timeout: 10_000 });
+    await expect(moves).toHaveText(/^\d+$/, { timeout: 10_000 });
   });
 });

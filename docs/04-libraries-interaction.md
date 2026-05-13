@@ -131,7 +131,8 @@ gsap.to(sprite.scale, { x: 1.2, y: 1.2, duration: 0.18 });
 
 ## Поток данных при типичном свопе
 
-1. `BoardController.onPointerDown` определяет тайлы a и b.
+1. Жест на тайле (`pointerdown` + свайп): `BoardController` фиксирует клетку `a` и по
+   направлению жеста вычисляет соседа `b`; при коротком движении — тап по бустеру.
 2. Пушит в `CommandQueue` асинхронный flow.
 3. `Board.swap(a, b)` — модель обновлена.
 4. `tweenAll([sa, sb], …)` — анимация позиций.
