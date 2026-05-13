@@ -19,7 +19,7 @@ Matter.js + TypeScript strict + Vite 5**. E2E — Playwright.
 src/
   core/        константы, типы, EventBus, Pixi extend()
   game/
-    board/     Board, matchFinder, cascade  ← чистая доменная логика
+    board/     Board, matchFinder (findMatches, findSquareMatches, collectMatchGroups), cascade
     state/     gameMachine (FSM), Zustand store
     commands/  CommandQueue (последовательные асинхронные действия)
     rules/     scoring
@@ -89,6 +89,7 @@ npm run test:all      # оба прогона подряд
 | `@pixi/react` (extend, useTick, ref) | `docs/06-react-pixi-integration.md` |
 | Matter.js | `docs/07-physics-matter.md` |
 | Match-3 алгоритмы (поиск, каскад, своп) | `docs/08-match3-mechanics.md` |
+| **Целевая архитектура системы бустеров** (очередь активаций, комбо, детерминизм) | `docs/17-booster-system-architecture.md` |
 | GSAP и анимации | `docs/09-animations.md` |
 | Ассеты, текстуры, атласы | `docs/10-assets-and-textures.md` |
 | Звук | `docs/11-audio.md` |

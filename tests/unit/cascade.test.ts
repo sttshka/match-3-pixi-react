@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { nextCascadeStep, runFullCascade } from '@game/board/cascade';
+import { TILE_TYPE_LINE_COL } from '@core/constants';
 import { applyLayout, isFull, makeEmptyBoard, readLayout } from './helpers';
 
 describe('cascade.nextCascadeStep', () => {
@@ -56,6 +57,16 @@ describe('cascade.nextCascadeStep', () => {
     // Сверху появляется новый тайл.
     expect(board.get(0, 0)).not.toBeNull();
     expect(step!.moves.length).toBeGreaterThan(0);
+  });
+
+  it('moveTarget: бустер спавнится на клетке хода, если она в паттерне', () => {
+    const board = makeEmptyBoard(4, 2);
+    applyLayout(board, [
+      [2, 3, 4, 5],
+      [1, 1, 1, 1],
+    ]);
+    nextCascadeStep(board, { moveTarget: { col: 3, row: 1 } });
+    expect(board.get(3, 1)?.type).toBe(TILE_TYPE_LINE_COL);
   });
 });
 

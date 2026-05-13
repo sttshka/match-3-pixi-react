@@ -37,4 +37,18 @@ describe('scoring', () => {
     expect(scoreForBoosterClear(1)).toBe(18);
     expect(scoreForBoosterClear(9)).toBe(162);
   });
+
+  it('квадрат 2×2 даёт очки как линия из 4', () => {
+    const square: MatchGroup = {
+      tiles: [
+        { col: 0, row: 0 },
+        { col: 1, row: 0 },
+        { col: 0, row: 1 },
+        { col: 1, row: 1 },
+      ],
+      length: 4,
+      kind: 'square',
+    };
+    expect(scoreForGroup(square)).toBe(60);
+  });
 });

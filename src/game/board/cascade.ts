@@ -1,5 +1,5 @@
 import type { CascadeStep, ResolveResult, TilePosition } from '@core/types';
-import { findMatches } from './matchFinder';
+import { collectMatchGroups } from './matchFinder';
 import { planBoosterSurvivorsFromMatches } from './boosterFromMatch';
 import { scoreForBoosterClear, scoreForGroups } from '../rules/scoring';
 import type { Board } from './Board';
@@ -33,11 +33,14 @@ export function applyBoosterClearAndGravity(board: Board, positions: TilePositio
 
 // Один шаг каскада: находим матчи, удаляем, схлопываем, доспавним новые.
 // Если матчей нет — возвращаем null, и контроллер останавливает каскад.
-export function nextCascadeStep(board: Board): CascadeStep | null {
-  const groups = findMatches(board);
+export function nextCascadeStep(
+  board: Board,
+  opts?: { moveTarget?: TilePosition },
+): CascadeStep | null {
+  const groups = collectMatchGroups(board);
   if (groups.length === 0) return null;
 
-  const plan = planBoosterSurvivorsFromMatches(groups);
+  const plan = planBoosterSurvivorsFromMatches(groups, opts?.moveTarget);
   for (const u of plan.upgrades) {
     const tile = board.get(u.col, u.row);
     if (tile) tile.type = u.type;

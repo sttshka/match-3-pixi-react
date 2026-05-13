@@ -7,7 +7,7 @@
 | Unit    | **Vitest**     | Чистая TS-логика (`Board`, `matchFinder`, `cascade`, `gameMachine`, `scoring`, `CommandQueue`) | `tests/unit/` |
 | E2E     | **Playwright** | Реальный браузер: меню, переход в игру, HUD, отсутствие console errors                         | `tests/e2e/`  |
 
-Текущее состояние: **40 unit-тестов + 5 E2E-тестов**, все зелёные.
+Текущее состояние: **50+ unit-тестов + 5 E2E-тестов**, все зелёные.
 
 ## Команды
 
@@ -39,7 +39,7 @@ tests/
 │   ├── matchFinder.test.ts
 │   ├── cascade.test.ts
 │   ├── gameMachine.test.ts
-│   ├── scoring.test.ts
+│   ├── booster.test.ts
 │   └── CommandQueue.test.ts
 └── e2e/
     ├── helpers/
@@ -71,7 +71,7 @@ applyLayout(board, [
   [3, 4, 5, 6, 7],
   [8, 9, 0, 1, 2],
 ]);
-expect(findMatches(board)).toHaveLength(1);
+expect(collectMatchGroups(board).filter((g) => g.kind === 'row')).toHaveLength(1);
 ```
 
 ### Подводный камень: разноцветный фон

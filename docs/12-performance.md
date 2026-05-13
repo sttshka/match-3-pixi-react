@@ -93,7 +93,7 @@ HUD’е (анимации, blur) их рендеринг тоже тратит 
 
 ## Worker-ы
 
-`findMatches` — это микросекунды для 8×8. Но если доска 16×16, и матч-чекер
+`collectMatchGroups` / `findMatches` — это микросекунды для 8×8. Но если доска 16×16, и матч-чекер
 работает каждое нажатие хинта/каждые 100 ms — рассмотрите вынос в
 Worker. Структура:
 
@@ -101,7 +101,7 @@ Worker. Структура:
 main thread        worker
    │ postMessage(board)
    ▼
-   │                ──▶ findMatches(board)
+   │                ──▶ collectMatchGroups(board)
    │                ◀── postMessage(matches)
    ▼
 обновить view

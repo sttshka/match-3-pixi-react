@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findMatches } from '@game/board/matchFinder';
+import { collectMatchGroups, findClusterBombMatches, findMatches, findSquareMatches } from '@game/board/matchFinder';
 import { TILE_TYPE_BOMB } from '@core/constants';
 import { applyLayout, makeEmptyBoard } from './helpers';
 
@@ -92,5 +92,48 @@ describe('matchFinder', () => {
     const board = makeEmptyBoard(5, 1);
     applyLayout(board, [[0, 0, TILE_TYPE_BOMB, 0, 0]]);
     expect(findMatches(board)).toEqual([]);
+  });
+
+  it('findSquareMatches находит квадрат 2×2 одного цвета', () => {
+    const board = makeEmptyBoard(3, 3);
+    applyLayout(board, [
+      [1, 1, 2],
+      [1, 1, 2],
+      [3, 3, 4],
+    ]);
+    const sq = findSquareMatches(board);
+    expect(sq).toHaveLength(1);
+    expect(sq[0]!.kind).toBe('square');
+    expect(sq[0]!.tiles).toHaveLength(4);
+  });
+
+  it('collectMatchGroups объединяет линии и квадраты', () => {
+    const board = makeEmptyBoard(3, 2);
+    applyLayout(board, [
+      [0, 0, 0],
+      [0, 0, 1],
+    ]);
+    const all = collectMatchGroups(board);
+    expect(all.some((g) => g.kind === 'row')).toBe(true);
+    expect(all.some((g) => g.kind === 'square')).toBe(true);
+  });
+
+  it('findClusterBombMatches: связный не-линейный кластер ≥5', () => {
+    const board = makeEmptyBoard(3, 3);
+    applyLayout(board, [
+      [1, 1, 1],
+      [1, 1, 2],
+      [3, 4, 5],
+    ]);
+    const cl = findClusterBombMatches(board);
+    expect(cl).toHaveLength(1);
+    expect(cl[0]!.kind).toBe('cluster');
+    expect(cl[0]!.tiles).toHaveLength(5);
+  });
+
+  it('прямая линия из 5 не даёт cluster (только линия для disco)', () => {
+    const board = makeEmptyBoard(5, 1);
+    applyLayout(board, [[0, 0, 0, 0, 0]]);
+    expect(findClusterBombMatches(board)).toHaveLength(0);
   });
 });

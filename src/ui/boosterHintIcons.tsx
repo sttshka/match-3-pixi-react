@@ -103,3 +103,51 @@ export function IconNoSwap() {
     </svg>
   );
 }
+
+/** Квадрат 2×2 — появление ракеты */
+export function IconPlaneSquare() {
+  return (
+    <svg {...common} width={48} height={48}>
+      <rect x={10} y={10} width={12} height={12} rx={2} fill="#48dbfb" stroke="#fff" strokeWidth={1} />
+      <rect x={26} y={10} width={12} height={12} rx={2} fill="#48dbfb" stroke="#fff" strokeWidth={1} />
+      <rect x={10} y={26} width={12} height={12} rx={2} fill="#48dbfb" stroke="#fff" strokeWidth={1} />
+      <rect x={26} y={26} width={12} height={12} rx={2} fill="#48dbfb" stroke="#fff" strokeWidth={1} />
+      <path d="M24 6v6M38 24h-6" stroke="#c8d6e5" strokeWidth={2} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Два бонуса рядом — комбо */
+export function IconTwoSpecialCombo() {
+  return (
+    <svg {...common} width={48} height={48}>
+      <rect x={8} y={16} width={14} height={16} rx={3} fill="#ffa502" opacity={0.9} />
+      <rect x={26} y={16} width={14} height={16} rx={3} fill="#54a0ff" opacity={0.9} />
+      <path d="M22 24h4" stroke="#fff" strokeWidth={2} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Большой взрыв (две бомбы) */
+export function IconBigExplosion() {
+  return (
+    <svg {...common} width={48} height={48}>
+      {Array.from({ length: 25 }).map((_, i) => {
+        const c = i % 5;
+        const r = Math.floor(i / 5);
+        const edge = c === 0 || c === 4 || r === 0 || r === 4;
+        return (
+          <rect
+            key={i}
+            x={6 + c * 7.2}
+            y={6 + r * 7.2}
+            width={6.5}
+            height={6.5}
+            rx={1}
+            fill={edge ? 'rgba(255,255,255,0.08)' : 'rgba(255,165,2,0.35)'}
+          />
+        );
+      })}
+    </svg>
+  );
+}

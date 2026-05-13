@@ -75,7 +75,7 @@ User pointerdown ──▶ BoardController.onPointerDown
                      CommandQueue.push(async swapFlow)
                      │   ▶ Board.swap(a, b)             (модель)
                      │   ▶ animateSwap(...)             (GSAP)
-                     │   ▶ findMatches(board)           (логика)
+                     │   ▶ collectMatchGroups(board)  (логика каскада)
                      │   ├─ если пусто → откатить swap, анимировать
                      │   └─ если есть → resolveCascades():
                      │        loop:

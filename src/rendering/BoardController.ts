@@ -1,14 +1,15 @@
 import { Container, Graphics, type FederatedPointerEvent } from 'pixi.js';
 import { Board } from '@game/board/Board';
 import { applyBoosterClearAndGravity, nextCascadeStep } from '@game/board/cascade';
-import { getBoosterSwapClear } from '@game/board/boosterActivation';
+import { getBoosterSwapClear, swapIsHorizontal } from '@game/board/boosterActivation';
 import {
   isBombType,
   isColorBoosterType,
   isLineColType,
   isLineRowType,
+  isPlaneType,
 } from '@game/board/boosterTypes';
-import { findMatches } from '@game/board/matchFinder';
+import { collectMatchGroups } from '@game/board/matchFinder';
 import { createGameMachine } from '@game/state/gameMachine';
 import { CommandQueue } from '@game/commands/CommandQueue';
 import { ANIM, BOARD_COLS, BOARD_ROWS, TILE_COLORS, TILE_SIZE } from '@core/constants';
@@ -136,6 +137,15 @@ export class BoardController {
         .stroke({ color: 0xffffff, alpha: 0.22, width: 2 });
       g.roundRect(-this.cellSize * 0.08, -half + pad * 2, this.cellSize * 0.16, this.cellSize - pad * 4, 4)
         .fill({ color: 0xffffff, alpha: 0.85 });
+    } else if (isPlaneType(type)) {
+      g.roundRect(-half + pad, -half + pad, this.cellSize - pad * 2, this.cellSize - pad * 2, 12)
+        .fill({ color })
+        .stroke({ color: 0xffffff, alpha: 0.25, width: 2 });
+      g.moveTo(-half * 0.55, 0)
+        .lineTo(0, -half * 0.35)
+        .lineTo(half * 0.55, 0)
+        .stroke({ color: 0xffffff, alpha: 0.85, width: 2.5 });
+      g.circle(half * 0.25, half * 0.15, this.cellSize * 0.12).fill({ color: 0xffffff, alpha: 0.35 });
     } else if (isColorBoosterType(type)) {
       g.circle(0, 0, half - pad * 0.8)
         .fill({ color: 0x2f3542 })
@@ -222,8 +232,8 @@ export class BoardController {
       await this.animateSwap(a, b);
 
       this.machine.transition('resolve');
-      const boosterClear = getBoosterSwapClear(a, b, this.board);
-      const matches = findMatches(this.board);
+      const boosterClear = getBoosterSwapClear(a, b, this.board, swapIsHorizontal(a, b));
+      const matches = collectMatchGroups(this.board);
       if (boosterClear === null && matches.length === 0) {
         bus.emit('swap:invalid', { a, b });
         this.board.swap(a, b);
@@ -238,7 +248,7 @@ export class BoardController {
         const boosterStep = applyBoosterClearAndGravity(this.board, boosterClear);
         await this.runCascadeStep(boosterStep);
       }
-      await this.resolveCascades();
+      await this.resolveCascades(b);
       this.machine.transition('idle');
     });
   }
@@ -260,10 +270,15 @@ export class BoardController {
     ]);
   }
 
-  private async resolveCascades(): Promise<void> {
+  private async resolveCascades(moveTargetForFirstStep?: TilePosition): Promise<void> {
     let safety = 24;
+    let first = true;
     while (safety-- > 0) {
-      const step = nextCascadeStep(this.board);
+      const step = nextCascadeStep(
+        this.board,
+        first && moveTargetForFirstStep ? { moveTarget: moveTargetForFirstStep } : undefined,
+      );
+      first = false;
       if (!step) break;
       if (this.destroyed) return;
       await this.runCascadeStep(step);

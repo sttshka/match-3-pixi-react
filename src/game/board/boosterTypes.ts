@@ -3,6 +3,7 @@ import {
   TILE_TYPE_COLOR,
   TILE_TYPE_LINE_COL,
   TILE_TYPE_LINE_ROW,
+  TILE_TYPE_PLANE,
   TILE_TYPES,
 } from '@core/constants';
 
@@ -28,6 +29,10 @@ export function isLineBoosterType(type: number): boolean {
 
 export function isColorBoosterType(type: number): boolean {
   return type === TILE_TYPE_COLOR;
+}
+
+export function isPlaneType(type: number): boolean {
+  return type === TILE_TYPE_PLANE;
 }
 
 export function isSpecialTileType(type: number): boolean {

@@ -135,7 +135,7 @@ gsap.to(sprite.scale, { x: 1.2, y: 1.2, duration: 0.18 });
 2. Пушит в `CommandQueue` асинхронный flow.
 3. `Board.swap(a, b)` — модель обновлена.
 4. `tweenAll([sa, sb], …)` — анимация позиций.
-5. `findMatches(board)` — поиск.
+5. `collectMatchGroups(board)` — поиск линий и квадратов 2×2.
    - Нет матчей → откат `Board.swap` + анимация назад → `idle`.
    - Есть матчи → `useAppStore.getState().decrementMove()`.
 6. `resolveCascades()` в цикле:

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
+  IconBigExplosion,
   IconBombBooster,
   IconColorBooster,
   IconColorClear,
   IconExplode3x3,
   IconLineBooster,
   IconLineClear,
-  IconNoSwap,
+  IconPlaneSquare,
+  IconTwoSpecialCombo,
 } from './boosterHintIcons';
 
 export function BoosterHintPanel() {
@@ -47,7 +49,7 @@ export function BoosterHintPanel() {
         aria-controls={open ? 'booster-hint-popover' : undefined}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? 'Закрыть' : 'Супер-фишки'}
+        {open ? 'Закрыть' : 'Бонусы'}
       </button>
       {open && (
         <div
@@ -58,58 +60,100 @@ export function BoosterHintPanel() {
           aria-labelledby={titleId}
         >
           <h3 id={titleId} className="booster-hint-title">
-            Супер-фишки
+            Бонусы на поле
           </h3>
           <p className="booster-hint-lead">
-            Собери линию — получишь подарок. Потом подвинь его к соседу.
+            Собери фигуру — появится бонус. Потом поменяй его местами с соседней клеткой, чтобы
+            включить.
           </p>
 
+          <p className="booster-hint-sub">Как получить</p>
           <div className="booster-hint-rows">
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconLineBooster />
               </span>
-              <p>Четыре одинаковых в ряд или в столбик — появится полоска.</p>
+              <p>
+                Четыре в ряд или в столбик — стрела: горизонтальный матч даёт бонус, который чистит
+                <strong> столбец</strong>; вертикальный — <strong>строку</strong> (как в Homescapes).
+              </p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconColorBooster />
               </span>
-              <p>Пять подряд — кружок с яркой обводкой.</p>
+              <p>Пять в ряд — радужный шар.</p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconBombBooster />
               </span>
-              <p>Крест из линий — круглая бомба.</p>
+              <p>Линии крест-накрест, L/T или связный кластер из пяти не в одну линию — бомба.</p>
+            </div>
+            <div className="booster-hint-row">
+              <span className="booster-hint-icon" aria-hidden>
+                <IconPlaneSquare />
+              </span>
+              <p>Квадрат два на два одного цвета — самолётик.</p>
             </div>
           </div>
 
-          <p className="booster-hint-sub">Свайпни к соседне клетке:</p>
+          <p className="booster-hint-sub">Поменяй с соседом</p>
           <div className="booster-hint-rows">
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconLineClear />
               </span>
-              <p>Полоска — исчезнет целая строка или целый столбик.</p>
+              <p>
+                Стрела: чистится целая строка или целый столбец по <strong>виду</strong> бонуса
+                (полоска на тайле горизонтальная или вертикальная), направление свопа не важно.
+              </p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconColorClear />
               </span>
-              <p>Кружок с обводкой — пропадут все такого же цвета, как сосед.</p>
+              <p>Радужный и обычный тайл — пропадут все того же цвета, что и обычный.</p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
                 <IconExplode3x3 />
               </span>
-              <p>Бомба — «бум» на маленьком квадрате три на три.</p>
+              <p>Бомба — квадрат три на три вокруг неё.</p>
             </div>
             <div className="booster-hint-row">
               <span className="booster-hint-icon" aria-hidden>
-                <IconNoSwap />
+                <IconPlaneSquare />
               </span>
-              <p>Два серых кружка друг к другу не подходят — ход не считается.</p>
+              <p>Самолётик — соседи по кресту и ещё один удар по выбранной клетке.</p>
+            </div>
+            <div className="booster-hint-row">
+              <span className="booster-hint-icon" aria-hidden>
+                <IconColorBooster />
+              </span>
+              <p>Два радужных рядом — очищают всё поле.</p>
+            </div>
+          </div>
+
+          <p className="booster-hint-sub">Два бонуса рядом</p>
+          <div className="booster-hint-rows">
+            <div className="booster-hint-row">
+              <span className="booster-hint-icon" aria-hidden>
+                <IconTwoSpecialCombo />
+              </span>
+              <p>Поменяй два бонуса местами, если они соседи — их силы складываются.</p>
+            </div>
+            <div className="booster-hint-row">
+              <span className="booster-hint-icon" aria-hidden>
+                <IconBigExplosion />
+              </span>
+              <p>Две бомбы — очень большой взрыв.</p>
+            </div>
+            <div className="booster-hint-row">
+              <span className="booster-hint-icon" aria-hidden>
+                <IconPlaneSquare />
+              </span>
+              <p>Два самолётика — три удара по разным клеткам.</p>
             </div>
           </div>
         </div>

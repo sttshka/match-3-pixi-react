@@ -12,6 +12,8 @@ export const TILE_TYPE_BOMB = TILE_TYPES;
 export const TILE_TYPE_LINE_ROW = TILE_TYPES + 1;
 export const TILE_TYPE_LINE_COL = TILE_TYPES + 2;
 export const TILE_TYPE_COLOR = TILE_TYPES + 3;
+/** «Ракета» / самолётик: квадрат 2×2 одного цвета. */
+export const TILE_TYPE_PLANE = TILE_TYPES + 4;
 
 // Размер ячейки в пикселях в "идеальном" разрешении.
 // Физический размер тайла на экране масштабируется в BoardView.
@@ -52,4 +54,5 @@ export const TILE_COLORS: number[] = [
   0x54a0ff, // линия по строке
   0x5f27cd, // линия по столбцу
   0x576574, // цветной бустер
+  0xc8d6e5, // ракета / самолётик
 ];

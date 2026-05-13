@@ -21,8 +21,9 @@ export interface MatchGroup {
   tiles: TilePosition[];
   // Длина (количество тайлов в группе). Для крестов считается общее число.
   length: number;
-  // Ориентация (если линия) либо 'cross' для пересечений.
-  kind: 'row' | 'col' | 'cross';
+  // Ориентация линии, 'cross' (пересечение линий), 'square' (квадрат 2×2),
+  // 'cluster' — связная область ≥5 не в одну линию (бомба, Homescapes).
+  kind: 'row' | 'col' | 'cross' | 'square' | 'cluster';
 }
 
 export interface ResolveResult {
