@@ -9,9 +9,9 @@ export class Board {
   readonly cols: number;
   readonly rows: number;
 
-  private cells: Array<TileModel | null>;
+  private readonly cells: Array<TileModel | null>;
   private nextId = 1;
-  private rng: () => number;
+  private readonly rng: () => number;
 
   constructor(
     cols: number = BOARD_COLS,

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useApplication } from '@pixi/react';
-import { Container } from 'pixi.js';
+import { type Container } from 'pixi.js';
 import { BoardController } from '@rendering/BoardController';
 import { PhysicsWorld } from '@physics/PhysicsWorld';
 import { useGameTick } from '@hooks/useTicker';

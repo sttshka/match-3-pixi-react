@@ -1,4 +1,4 @@
-import { Container, Graphics, FederatedPointerEvent } from 'pixi.js';
+import { Container, Graphics, type FederatedPointerEvent } from 'pixi.js';
 import { Board } from '@game/board/Board';
 import { nextCascadeStep } from '@game/board/cascade';
 import { findMatches } from '@game/board/matchFinder';
@@ -10,6 +10,7 @@ import { isAdjacent } from '@utils/math';
 import { tweenAll, tweenTo } from '@utils/tween';
 import type { TilePosition } from '@core/types';
 import { useAppStore } from '@game/state/store';
+import { type IHitArea } from 'pixi.js';
 
 // BoardController владеет визуальной частью доски: создаёт Pixi-объекты,
 // обрабатывает ввод, запускает анимации и применяет результаты игровой
@@ -22,7 +23,7 @@ interface TileSprite {
 }
 
 export class BoardController {
-  private board: Board;
+  private readonly board: Board;
   private machine = createGameMachine();
   private queue = new CommandQueue();
 
@@ -32,9 +33,9 @@ export class BoardController {
   private overlayLayer = new Container();
   private sprites = new Map<number, TileSprite>();
 
-  private cellSize: number;
-  private boardWidth: number;
-  private boardHeight: number;
+  private readonly cellSize: number;
+  private readonly boardWidth: number;
+  private readonly boardHeight: number;
 
   private selected: TilePosition | null = null;
   private destroyed = false;
@@ -51,7 +52,7 @@ export class BoardController {
     this.root.addChild(this.gridLayer, this.tilesLayer, this.overlayLayer);
 
     this.root.eventMode = 'static';
-    this.root.hitArea = { contains: () => true } as any;
+    this.root.hitArea = { contains: () => true } as IHitArea;
     this.root.on('pointerdown', this.onPointerDown);
 
     this.board = new Board();

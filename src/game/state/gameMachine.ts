@@ -7,7 +7,7 @@
 //   cascade   — каскад: удаление+гравитация+спавн+анимации
 //   gameover  — финал
 
-export type GameState = 'idle' | 'input' | 'swap' | 'resolve' | 'cascade' | 'gameover';
+export type GameState = 'idle' | 'input' | 'swap' | 'resolve' | 'cascade' | 'game-over';
 
 export interface GameMachine {
   state: GameState;
@@ -18,12 +18,12 @@ export interface GameMachine {
 
 // Разрешённые переходы. Намеренно жёсткие, чтобы ловить баги логики.
 const TRANSITIONS: Record<GameState, GameState[]> = {
-  idle: ['input', 'gameover'],
+  idle: ['input', 'game-over'],
   input: ['swap', 'idle'],
   swap: ['resolve'],
   resolve: ['cascade', 'idle'],
-  cascade: ['idle', 'gameover'],
-  gameover: ['idle'],
+  cascade: ['idle', 'game-over'],
+  ['game-over']: ['game-over'],
 };
 
 export function createGameMachine(): GameMachine {
