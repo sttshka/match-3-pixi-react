@@ -291,13 +291,16 @@ export class BoardController {
     bus.emit('cascade:step', step);
 
     await this.animatePops(step.resolved.removed);
-    this.refreshTilesAtBoosterUpgrades(step.resolved.upgradedToBooster);
+    this.refreshTilesAtBoosterUpgrades(step.resolved.upgradedToBooster, step.moves);
 
     await this.animateMoves(step.moves);
     await this.animateSpawned(step.spawned);
   }
 
-  private refreshTilesAtBoosterUpgrades(upgrades?: Array<{ id: number; type: number }>): void {
+  private refreshTilesAtBoosterUpgrades(
+    upgrades?: Array<{ id: number; type: number }>,
+    moves?: Array<{ id: number; from: TilePosition; to: TilePosition }>,
+  ): void {
     if (!upgrades?.length) return;
     for (const u of upgrades) {
       let tile: TileModel | null = null;
@@ -318,7 +321,9 @@ export class BoardController {
       old.parent?.removeChild(old);
       old.destroy();
       const view = this.createTileGraphics(tile.type);
-      const p = this.cellToPixel(tile.col, tile.row);
+      const move = moves?.find((m) => m.id === tile.id);
+      const start = move?.from ?? { col: tile.col, row: tile.row };
+      const p = this.cellToPixel(start.col, start.row);
       view.position.set(p.x, p.y);
       this.tilesLayer.addChild(view);
       this.sprites.set(tile.id, { id: tile.id, view });
