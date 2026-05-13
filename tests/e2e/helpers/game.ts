@@ -11,8 +11,17 @@ export async function gotoApp(page: Page): Promise<void> {
   await page.waitForLoadState('networkidle');
 }
 
+export async function startGoalsGame(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'С целью' }).click();
+}
+
+export async function startZenGame(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Дзен' }).click();
+}
+
+/** Режим с целью и лимитом ходов (классический HUD для существующих сценариев). */
 export async function startGame(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Начать игру' }).click();
+  await startGoalsGame(page);
 }
 
 export function hud(page: Page) {
@@ -22,6 +31,7 @@ export function hud(page: Page) {
   return {
     score: panel('Очки').locator('strong'),
     target: panel('Цель').locator('strong'),
+    mode: panel('Режим').locator('strong'),
     moves: panel('Ходов').locator('strong'),
   };
 }
