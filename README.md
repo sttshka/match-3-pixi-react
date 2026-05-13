@@ -26,6 +26,20 @@ npm run test:report  # открыть HTML-репорт последнего п�
 
 Требуется Node.js `>=18.18`.
 
+## Для AI-агентов
+
+Если вы открываете репозиторий через Cursor / Codex CLI / Claude Code:
+
+- [`AGENTS.md`](./AGENTS.md) — **компактная навигационная карта** для агентов
+  (стандарт [agents.md](https://agents.md)). Скажите агенту "прочитай AGENTS.md"
+  — этого достаточно, чтобы он не блуждал по проекту.
+- [`.cursor/rules/`](./.cursor/rules) — Cursor Rules с привязкой к глобам
+  (например, по Playwright-тестам).
+- [`public/llms.txt`](./public/llms.txt) — карта для **онлайн** LLM-краулеров
+  (когда сайт задеплоен). Стандарт [llmstxt.org](https://llmstxt.org).
+- [`public/robots.txt`](./public/robots.txt) — правила доступа для поисковых
+  и AI-ботов (GPTBot, ClaudeBot, PerplexityBot и т.д.).
+
 ## Документация
 
 Вся документация на русском — в каталоге [`docs/`](./docs).

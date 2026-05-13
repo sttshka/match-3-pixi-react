@@ -1,8 +1,8 @@
 # Match-3 Pixi v8 Demo
 
-> Учебно-демонстрационный проект match-3 игры на стеке **Pixi.js v8 + React 18 +
-> @pixijs/react v8 + Matter.js**. Включает игровую логику, рендеринг,
-> анимации, базовую физику и подробную русскоязычную документацию.
+> Учебно-демонстрационный проект match-3 игры на стеке **Pixi.js v8 + React 19 +
+> @pixi/react v8 + Matter.js**. Включает игровую логику, рендеринг, анимации,
+> базовую физику, E2E-тесты Playwright и подробную русскоязычную документацию.
 
 Назначение проекта — продемонстрировать расширяемую архитектуру для
 интерактивных 2D-игр в браузере и служить отправной точкой для разработки
@@ -11,11 +11,12 @@
 ## Технологический стек
 
 - Pixi.js v8 — низкоуровневый WebGL/WebGPU-рендер
-- React 18 + @pixijs/react v8 — декларативная сцена и UI
+- React 19 + @pixi/react v8 — декларативная сцена и UI
 - Matter.js — 2D физический движок для эффектов и физических режимов
 - TypeScript 5 (strict), Vite 5 — сборка и dev-server
 - Zustand — глобальный стейт UI, mitt — event-bus
 - GSAP — tween-анимации, @pixi/sound — аудио
+- Playwright — E2E-тестирование
 
 ## Документация
 
@@ -31,10 +32,15 @@
 - [Ассеты и текстуры](/docs/10-assets-and-textures.md)
 - [Аудио](/docs/11-audio.md)
 - [Производительность](/docs/12-performance.md)
-- [Тестирование](/docs/13-testing.md)
+- [Тестирование](/docs/13-testing.md): Playwright + Vitest
 - [Соглашения](/docs/14-conventions.md)
 - [Troubleshooting](/docs/15-troubleshooting.md)
 - [Roadmap](/docs/16-roadmap.md)
+
+## Для in-repo агентов (Cursor, Codex, Claude Code)
+
+- [/AGENTS.md](/AGENTS.md): главный navigation-файл для агентов в IDE
+- [/.cursor/rules](/.cursor/rules): Cursor-правила (например, по Playwright)
 
 ## Дополнительно
 
