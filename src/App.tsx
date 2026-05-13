@@ -36,7 +36,14 @@ export function App() {
       {scene === 'gameOver' && <GameOverModal won={false} />}
       {scene === 'win' && <GameOverModal won={true} />}
 
-      <div className="footer">PIXI v8 · React · @pixi/react · Matter.js</div>
+      <div className="footer">
+        <div>Made with PIXI v8 · React · @pixi/react · Matter.js </div>
+        <div>
+          by
+          <a href={'https://sttshka.t.me'}>@sttshka</a> using{' '}
+          <a href={'https://cursor.com'}>Cursor</a>
+        </div>
+      </div>
     </div>
   );
 }
