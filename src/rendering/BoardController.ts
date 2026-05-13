@@ -2,13 +2,7 @@ import { Container, Graphics, type FederatedPointerEvent } from 'pixi.js';
 import { Board } from '@game/board/Board';
 import { applyBoosterClearAndGravity, nextCascadeStep } from '@game/board/cascade';
 import { getBoosterSwapClear, swapIsHorizontal } from '@game/board/boosterActivation';
-import {
-  isBombType,
-  isColorBoosterType,
-  isLineColType,
-  isLineRowType,
-  isPlaneType,
-} from '@game/board/boosterTypes';
+import { drawBoosterTile } from '@rendering/boosterGraphics';
 import { collectMatchGroups } from '@game/board/matchFinder';
 import { createGameMachine } from '@game/state/gameMachine';
 import { CommandQueue } from '@game/commands/CommandQueue';
@@ -120,46 +114,19 @@ export class BoardController {
     const pad = this.cellSize * 0.12;
     const color = TILE_COLORS[type % TILE_COLORS.length]!;
 
-    if (isBombType(type)) {
-      g.circle(0, 0, half - pad * 0.6)
-        .fill({ color })
-        .stroke({ color: 0xffffff, alpha: 0.55, width: 3 });
-      g.circle(-half * 0.35, -half * 0.35, this.cellSize * 0.1).fill({ color: 0xffffee, alpha: 0.95 });
-    } else if (isLineRowType(type)) {
-      g.roundRect(-half + pad, -half + pad, this.cellSize - pad * 2, this.cellSize - pad * 2, 12)
-        .fill({ color })
-        .stroke({ color: 0xffffff, alpha: 0.22, width: 2 });
-      g.roundRect(-half + pad * 2, -this.cellSize * 0.08, this.cellSize - pad * 4, this.cellSize * 0.16, 4)
-        .fill({ color: 0xffffff, alpha: 0.85 });
-    } else if (isLineColType(type)) {
-      g.roundRect(-half + pad, -half + pad, this.cellSize - pad * 2, this.cellSize - pad * 2, 12)
-        .fill({ color })
-        .stroke({ color: 0xffffff, alpha: 0.22, width: 2 });
-      g.roundRect(-this.cellSize * 0.08, -half + pad * 2, this.cellSize * 0.16, this.cellSize - pad * 4, 4)
-        .fill({ color: 0xffffff, alpha: 0.85 });
-    } else if (isPlaneType(type)) {
-      g.roundRect(-half + pad, -half + pad, this.cellSize - pad * 2, this.cellSize - pad * 2, 12)
-        .fill({ color })
-        .stroke({ color: 0xffffff, alpha: 0.25, width: 2 });
-      g.moveTo(-half * 0.55, 0)
-        .lineTo(0, -half * 0.35)
-        .lineTo(half * 0.55, 0)
-        .stroke({ color: 0xffffff, alpha: 0.85, width: 2.5 });
-      g.circle(half * 0.25, half * 0.15, this.cellSize * 0.12).fill({ color: 0xffffff, alpha: 0.35 });
-    } else if (isColorBoosterType(type)) {
-      g.circle(0, 0, half - pad * 0.8)
-        .fill({ color: 0x2f3542 })
-        .stroke({ color, alpha: 0.9, width: 5 });
-      g.circle(0, 0, half * 0.35).fill({ color, alpha: 0.5 });
-    } else {
-      g.roundRect(-half + pad, -half + pad, this.cellSize - pad * 2, this.cellSize - pad * 2, 12)
-        .fill({ color })
-        .stroke({ color: 0xffffff, alpha: 0.18, width: 2 });
-      g.circle(-half / 2 + 4, -half / 2 + 4, this.cellSize * 0.12).fill({
-        color: 0xffffff,
-        alpha: 0.25,
-      });
+    if (drawBoosterTile(g, type, this.cellSize)) {
+      g.eventMode = 'static';
+      g.cursor = 'pointer';
+      return g;
     }
+
+    g.roundRect(-half + pad, -half + pad, this.cellSize - pad * 2, this.cellSize - pad * 2, 12)
+      .fill({ color })
+      .stroke({ color: 0xffffff, alpha: 0.18, width: 2 });
+    g.circle(-half / 2 + 4, -half / 2 + 4, this.cellSize * 0.12).fill({
+      color: 0xffffff,
+      alpha: 0.25,
+    });
 
     g.eventMode = 'static';
     g.cursor = 'pointer';
